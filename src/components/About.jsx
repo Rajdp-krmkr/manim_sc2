@@ -8,17 +8,17 @@ const About = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div>
             <h2 className="text-4xl font-bold text-white mb-6">
-              About MathVision AI
+              About manimate
             </h2>
             <div className="space-y-6">
               <p className="text-gray-300 text-lg leading-relaxed">
-                MathVision AI is a powerful engine for creating precise
+                manimate is a powerful engine for creating precise
                 mathematical animations. Originally created by Grant Sanderson
                 (3Blue1Brown), it has become the go-to tool for educators,
                 researchers, and content creators worldwide.
               </p>
               <p className="text-gray-300 text-lg leading-relaxed">
-                Our platform makes MathVision AI accessible to everyone through
+                Our platform makes manimate accessible to everyone through
                 natural language prompts, eliminating the need to write complex
                 code while maintaining the precision and beauty of mathematical
                 visualizations.

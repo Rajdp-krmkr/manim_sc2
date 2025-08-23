@@ -12,39 +12,40 @@ const Navbar = () => {
   const { user, signOut, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    const handleScroll = () => {
-      const scrollY = window.scrollY;
-      // Show navbar after scrolling down 100px
-      if (scrollY > 100) {
-        setIsVisible(true);
-      } else {
-        setIsVisible(false);
-      }
-    };
+    // Only apply scroll behavior for non-authenticated users
+    if (!isAuthenticated) {
+      const handleScroll = () => {
+        const scrollY = window.scrollY;
+        // Show navbar after scrolling down 100px
+        if (scrollY > 100) {
+          setIsVisible(true);
+        } else {
+          setIsVisible(false);
+        }
+      };
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+      window.addEventListener("scroll", handleScroll);
+      return () => window.removeEventListener("scroll", handleScroll);
+    } else {
+      // For authenticated users, always show the navbar
+      setIsVisible(true);
+    }
+  }, [isAuthenticated]);
 
-  const navItems = [
-    { name: "Home", href: "#home" },
-    { name: "Features", href: "#features" },
-    { name: "Examples", href: "#examples" },
-    { name: "About", href: "#about" },
-    { name: "Contact", href: "#contact" },
-  ];
-
-  // Add Library link for authenticated users
+  // Navigation items based on authentication status
   const authenticatedNavItems = isAuthenticated
     ? [
-        { name: "Home", href: "#home" },
+        { name: "Home", href: "/" },
         { name: "Library", href: "/library" },
+        { name: "Generate", href: "/generate" },
+      ]
+    : [
+        { name: "Home", href: "#home" },
         { name: "Features", href: "#features" },
         { name: "Examples", href: "#examples" },
         { name: "About", href: "#about" },
         { name: "Contact", href: "#contact" },
-      ]
-    : navItems;
+      ];
 
   return (
     <nav
@@ -56,7 +57,7 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <h1 className="text-2xl font-bold text-white">MathVision AI</h1>
+            <h1 className="text-2xl font-bold text-white">manimate</h1>
           </div>
 
           {/* Desktop Navigation */}

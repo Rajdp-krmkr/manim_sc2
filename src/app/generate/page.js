@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useGeneration } from "@/context/GenerationContext";
 import {
   FiSend,
   FiDownload,
@@ -20,6 +21,7 @@ import {
 const VideoGenerationPage = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { generationData, clearGenerationData } = useGeneration();
   const [initialPrompt, setInitialPrompt] = useState("");
   const [chatMessages, setChatMessages] = useState([]);
   const [currentMessage, setCurrentMessage] = useState("");
@@ -38,54 +40,67 @@ const VideoGenerationPage = () => {
   const chatEndRef = useRef(null);
 
   useEffect(() => {
-    // Get the initial prompt from URL params
-    const prompt = searchParams.get("prompt") || "Default math animation";
-    setInitialPrompt(prompt);
+    // Check if we have generation data from context
+    if (generationData) {
+      console.log("Generation data received:", generationData);
 
-    // Add initial message to chat
-    setChatMessages([
-      {
-        id: 1,
-        type: "user",
-        content: prompt,
-        timestamp: new Date(),
-      },
-      {
-        id: 2,
-        type: "system",
-        content: "Generating your mathematical animation...",
-        timestamp: new Date(),
-      },
-    ]);
+      // Use the original prompt/topic that was submitted
+      const prompt =
+        generationData.originalTopic ||
+        generationData.text ||
+        generationData.prompt ||
+        "";
+      setInitialPrompt(prompt);
 
-    // Simulate video generation with loader
-    setTimeout(() => {
-      setVideoData({
-        title: "Mathematical Animation",
-        description: `Animation generated from prompt: "${prompt}"`,
-        duration: "0:15",
-        resolution: "1920x1080",
-        fps: "60 FPS",
-        format: "MP4",
-        size: "2.3 MB",
-        videoUrl: "/assests/heroVid.mp4", // Using the existing video as demo
-        thumbnail: "/assests/heroVid.mp4",
-      });
-
-      setChatMessages((prev) => [
-        ...prev.slice(0, -1), // Remove loading message
+      // Add initial message to chat
+      setChatMessages([
         {
-          id: Date.now(),
-          type: "assistant",
-          content:
-            "✅ Your mathematical animation has been successfully generated! You can preview it on the right side.",
+          id: 1,
+          type: "user",
+          content: prompt,
+          timestamp: new Date(),
+        },
+        {
+          id: 2,
+          type: "system",
+          content: "Processing your request...",
           timestamp: new Date(),
         },
       ]);
 
-      setIsLoading(false);
-    }, 3000); // 3 second loading simulation
-  }, [searchParams]);
+      // Simulate video generation with loader
+      setTimeout(() => {
+        setVideoData({
+          title: "Mathematical Animation",
+          description: `Animation generated from prompt: "${prompt}"`,
+          duration: "0:15",
+          resolution: "1920x1080",
+          fps: "60 FPS",
+          format: "MP4",
+          size: "2.3 MB",
+          videoUrl: "/assests/heroVid.mp4", // Using the existing video as demo
+          thumbnail: "/assests/heroVid.mp4",
+          generationResponse: generationData, // Store the actual API response
+        });
+
+        setChatMessages((prev) => [
+          ...prev.slice(0, -1), // Remove loading message
+          {
+            id: Date.now(),
+            type: "assistant",
+            content:
+              "✅ Your mathematical animation has been successfully generated! You can preview it on the right side.",
+            timestamp: new Date(),
+          },
+        ]);
+
+        setIsLoading(false);
+      }, 3000); // 3 second loading simulation
+    } else {
+      // If no generation data, redirect back to home
+      router.push("/");
+    }
+  }, [generationData, router]);
 
   useEffect(() => {
     // Auto-scroll chat to bottom
@@ -287,7 +302,7 @@ const VideoGenerationPage = () => {
         {/* Chat Header */}
         <div className="bg-gray-900 p-4 border-b border-gray-700">
           <h2 className="text-xl font-bold text-white mb-2">
-            MathVision AI Assistant
+            manimate Assistant
           </h2>
           <p className="text-gray-300 text-sm">
             Continue refining your animation with natural language

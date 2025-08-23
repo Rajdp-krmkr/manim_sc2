@@ -1,6 +1,7 @@
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+import { GenerationProvider } from "@/context/GenerationContext";
 import { QueryProvider } from "@/providers/query-provider";
 
 const poppins = Poppins({
@@ -10,7 +11,7 @@ const poppins = Poppins({
 });
 
 export const metadata = {
-  title: "MathVision AI - Mathematical Animation Studio",
+  title: "manimate - Mathematical Animation Studio",
   description: "Create stunning mathematical animations with AI-powered tools",
 };
 
@@ -21,7 +22,9 @@ export default function RootLayout({ children }) {
         className={`${poppins.className} transition-all duration-300 bg-black text-white`}
       >
         <QueryProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <GenerationProvider>{children}</GenerationProvider>
+          </AuthProvider>
         </QueryProvider>
       </body>
     </html>

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FaGoogle } from "react-icons/fa";
 import { FiArrowLeft, FiUser, FiShield } from "react-icons/fi";
@@ -7,42 +7,100 @@ import { useAuth } from "@/context/AuthContext";
 
 const AuthPage = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
   const router = useRouter();
-  const { signIn } = useAuth();
+  const {
+    signInWithGoogle,
+    isAuthenticated,
+    isLoading: authLoading,
+  } = useAuth();
+
+  // Redirect to library if user is already authenticated
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.push("/library");
+    }
+  }, [isAuthenticated, authLoading, router]);
 
   const handleGoogleAuth = async () => {
     setIsLoading(true);
+    setError(null);
 
     try {
-      // Simulate Google OAuth flow
-      // In a real app, you would integrate with Google OAuth or NextAuth.js
-      console.log("Initiating Google OAuth...");
-
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Simulate successful authentication
-      const userData = {
-        id: "google_123",
-        name: "John Doe",
-        email: "john.doe@gmail.com",
-        avatar: "https://via.placeholder.com/40",
-      };
-
-      // Use auth context to sign in
-      signIn(userData);
-
-      // Redirect to home
-      router.push("/");
+      await signInWithGoogle();
+      // Redirect to library page after successful authentication
+      router.push("/library");
     } catch (error) {
       console.error("Authentication failed:", error);
+      setError("Failed to sign in with Google. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative mb-6">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-white mx-auto"></div>
+            <div
+              className="absolute inset-2 animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-400"
+              style={{
+                animationDirection: "reverse",
+                animationDuration: "1.5s",
+              }}
+            ></div>
+          </div>
+          <h3 className="text-white text-lg font-semibold mb-2">
+            Checking Authentication...
+          </h3>
+          <p className="text-gray-300 text-sm">Please wait</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-black flex items-center justify-center relative overflow-hidden">
+      {/* Loading Overlay */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="relative">
+              {/* Spinning loader */}
+              <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-white mx-auto mb-4"></div>
+              {/* Inner spinning element */}
+              <div
+                className="absolute inset-2 animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-400"
+                style={{
+                  animationDirection: "reverse",
+                  animationDuration: "1.5s",
+                }}
+              ></div>
+            </div>
+            <h3 className="text-white text-lg font-semibold mb-2">
+              Authenticating...
+            </h3>
+            <p className="text-gray-300 text-sm">
+              Please wait while we sign you in
+            </p>
+            <div className="mt-4 flex justify-center space-x-1">
+              <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
+              <div
+                className="w-2 h-2 bg-white rounded-full animate-bounce"
+                style={{ animationDelay: "0.1s" }}
+              ></div>
+              <div
+                className="w-2 h-2 bg-white rounded-full animate-bounce"
+                style={{ animationDelay: "0.2s" }}
+              ></div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900 opacity-50"></div>
       <div className="absolute inset-0">
@@ -53,14 +111,19 @@ const AuthPage = () => {
       {/* Back Button */}
       <button
         onClick={() => router.push("/")}
-        className="absolute top-6 left-6 flex items-center space-x-2 text-gray-300 hover:text-white transition-colors z-10"
+        disabled={isLoading}
+        className="absolute top-6 left-6 flex items-center space-x-2 text-gray-300 hover:text-white transition-colors z-10 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <FiArrowLeft className="text-xl" />
         <span>Back to Home</span>
       </button>
 
       {/* Auth Container */}
-      <div className="relative z-10 w-full max-w-md mx-4">
+      <div
+        className={`relative z-10 w-full max-w-md mx-4 ${
+          isLoading ? "pointer-events-none opacity-75" : ""
+        }`}
+      >
         <div className="bg-gray-900/80 backdrop-blur-xl border border-gray-700 rounded-2xl p-8 shadow-2xl">
           {/* Header */}
           <div className="text-center mb-8">
@@ -70,7 +133,7 @@ const AuthPage = () => {
               </div>
             </div>
             <h1 className="text-3xl font-bold text-white mb-2">
-              Welcome to MathVision AI
+              Welcome to manimate
             </h1>
             <p className="text-gray-300 text-sm">
               Sign in or create your account to start creating amazing
@@ -147,7 +210,7 @@ const AuthPage = () => {
         {/* Additional Info */}
         <div className="mt-6 text-center">
           <p className="text-gray-400 text-sm">
-            New to MathVision AI? Google sign-in will automatically create your
+            New to manimate? Google sign-in will automatically create your
             account.
           </p>
         </div>

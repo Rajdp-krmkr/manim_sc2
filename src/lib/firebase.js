@@ -14,6 +14,26 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+// Debug: Log configuration (remove in production)
+console.log("Firebase Config:", {
+  apiKey: firebaseConfig.apiKey ? "✓ Set" : "✗ Missing",
+  authDomain: firebaseConfig.authDomain ? "✓ Set" : "✗ Missing",
+  projectId: firebaseConfig.projectId ? "✓ Set" : "✗ Missing",
+  storageBucket: firebaseConfig.storageBucket ? "✓ Set" : "✗ Missing",
+  messagingSenderId: firebaseConfig.messagingSenderId ? "✓ Set" : "✗ Missing",
+  appId: firebaseConfig.appId ? "✓ Set" : "✗ Missing",
+});
+
+// Check if all required config values are present
+const requiredConfig = ["apiKey", "authDomain", "projectId", "appId"];
+const missingConfig = requiredConfig.filter((key) => !firebaseConfig[key]);
+
+if (missingConfig.length > 0) {
+  throw new Error(
+    `Missing Firebase configuration: ${missingConfig.join(", ")}`
+  );
+}
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
@@ -25,5 +45,8 @@ export const db = getFirestore(app);
 
 // Initialize Google Auth Provider
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+  prompt: "select_account",
+});
 
 export default app;

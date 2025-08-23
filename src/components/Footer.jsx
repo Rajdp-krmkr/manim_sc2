@@ -8,9 +8,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="col-span-1 md:col-span-2">
-            <h3 className="text-2xl font-bold text-white mb-4">
-              MathVision AI
-            </h3>
+            <h3 className="text-2xl font-bold text-white mb-4">manimate</h3>
             <p className="text-gray-300 text-sm leading-relaxed mb-4">
               Transform your mathematical concepts into stunning visual
               animations with the power of natural language prompts.
@@ -84,7 +82,7 @@ const Footer = () => {
 
         <div className="mt-8 pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-400 text-sm">
-            © 2025 MathVision AI Platform. All rights reserved.
+            © 2025 manimate Platform. All rights reserved.
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <a

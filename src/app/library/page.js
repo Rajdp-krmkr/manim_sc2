@@ -15,10 +15,11 @@ import {
   FiFilter,
 } from "react-icons/fi";
 import { useAuth } from "@/context/AuthContext";
+import Navbar from "@/components/Navbar";
 
 const LibraryPage = () => {
   const router = useRouter();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBy, setFilterBy] = useState("all");
 
@@ -122,8 +123,47 @@ const LibraryPage = () => {
     // In a real app, you would handle these actions properly
   };
 
+  // Show loading state while authentication is being checked
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative mb-6">
+            {/* Spinning loader */}
+            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-white mx-auto"></div>
+            {/* Inner spinning element */}
+            <div
+              className="absolute inset-2 animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-400"
+              style={{
+                animationDirection: "reverse",
+                animationDuration: "1.5s",
+              }}
+            ></div>
+          </div>
+          <h3 className="text-white text-lg font-semibold mb-2">
+            Loading Your Library...
+          </h3>
+          <p className="text-gray-300 text-sm">
+            Please wait while we verify your access
+          </p>
+          <div className="mt-4 flex justify-center space-x-1">
+            <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
+            <div
+              className="w-2 h-2 bg-white rounded-full animate-bounce"
+              style={{ animationDelay: "0.1s" }}
+            ></div>
+            <div
+              className="w-2 h-2 bg-white rounded-full animate-bounce"
+              style={{ animationDelay: "0.2s" }}
+            ></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Redirect if not authenticated
-  if (isAuthenticated) {
+  if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
@@ -146,43 +186,30 @@ const LibraryPage = () => {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Header */}
-      <div className="bg-gray-900 border-b border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push("/")}
-                className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors"
-              >
-                <FiArrowLeft className="text-xl" />
-                <span>Back to Home</span>
-              </button>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push("/generate")}
-                className="bg-white text-black px-6 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors flex items-center space-x-2"
-              >
-                <FiEdit3 className="text-lg" />
-                <span>Create New</span>
-              </button>
-              <span className="text-sm text-gray-400">
-                Welcome back, {user?.name}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Main Navbar */}
+      <Navbar />
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
         {/* Page Title */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">My Manimations</h1>
-          <p className="text-gray-400">
-            Your collection of mathematical animations
-          </p>
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-white mb-2">
+              My Manimations
+            </h1>
+            <p className="text-gray-400">
+              Your collection of mathematical animations
+            </p>
+          </div>
+          <div className="mt-4 sm:mt-0">
+            <button
+              onClick={() => router.push("/")}
+              className="bg-white text-black px-6 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors flex items-center space-x-2"
+            >
+              <FiEdit3 className="text-lg" />
+              <span>Create New</span>
+            </button>
+          </div>
         </div>
 
         {/* Search and Filter Bar */}

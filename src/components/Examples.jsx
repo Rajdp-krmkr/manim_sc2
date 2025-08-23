@@ -1,9 +1,11 @@
 "use client";
 import React from "react";
 import { useRouter } from "next/navigation";
+import { useGeneration } from "@/context/GenerationContext";
 
-const Examples = ({ setPrompt, isAuthenticated }) => {
+const Examples = ({ setTopic, isAuthenticated }) => {
   const router = useRouter();
+  const { setGenerationResponse } = useGeneration();
 
   const handleTryExample = (example) => {
     if (!isAuthenticated) {
@@ -12,8 +14,16 @@ const Examples = ({ setPrompt, isAuthenticated }) => {
       return;
     }
 
-    // If authenticated, proceed to generate page
-    router.push(`/generate?prompt=${encodeURIComponent(example.prompt)}`);
+    // Store the example topic in generation context
+    setGenerationResponse({
+      originalTopic: example.prompt,
+      text: example.prompt,
+      prompt: example.prompt,
+      isExample: true,
+    });
+
+    // If authenticated, proceed to scene builder page
+    router.push("/scene-builder");
   };
   const examples = [
     {

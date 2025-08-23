@@ -4,7 +4,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useGeneration } from "@/context/GenerationContext";
 import Navbar from "@/components/Navbar";
-import { FiPlus, FiTrash2, FiPlay, FiArrowLeft } from "react-icons/fi";
+import {
+  FiPlus,
+  FiTrash2,
+  FiPlay,
+  FiArrowLeft,
+  FiChevronDown,
+  FiChevronUp,
+} from "react-icons/fi";
 
 const SceneBuilderPage = () => {
   const router = useRouter();
@@ -17,14 +24,12 @@ const SceneBuilderPage = () => {
     { id: 2, prompt: "" },
   ]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [openDropdowns, setOpenDropdowns] = useState({});
 
   useEffect(() => {
     // Check if we have generation data from context
     if (generationData) {
-      console.log(
-        "Generation data received in scene-builder:",
-        generationData?.data.scenes
-      );
+      console.log("Generation data received in scene-builder:", generationData);
 
       // Use the original topic that was submitted (prioritize originalTopic, then text, then fallback)
       const topicFromData =
@@ -73,12 +78,22 @@ const SceneBuilderPage = () => {
   // Adjust textarea heights when scenes change
   useEffect(() => {
     const adjustTextareaHeights = () => {
-      const textareas = document.querySelectorAll(
+      // Adjust main scene textareas
+      const sceneTextareas = document.querySelectorAll(
         "textarea[data-scene-textarea]"
       );
-      textareas.forEach((textarea) => {
+      sceneTextareas.forEach((textarea) => {
         textarea.style.height = "auto";
         textarea.style.height = Math.min(textarea.scrollHeight, 300) + "px";
+      });
+
+      // Adjust animation code textareas
+      const animTextareas = document.querySelectorAll(
+        "textarea[data-anim-textarea]"
+      );
+      animTextareas.forEach((textarea) => {
+        textarea.style.height = "auto";
+        textarea.style.height = Math.min(textarea.scrollHeight, 200) + "px";
       });
     };
 
@@ -113,9 +128,23 @@ const SceneBuilderPage = () => {
     );
   };
 
+  const updateSceneAnim = (sceneId, anim) => {
+    setScenes(
+      scenes.map((scene) =>
+        scene.id === sceneId ? { ...scene, originalAnim: anim } : scene
+      )
+    );
+  };
+
+  const toggleDropdown = (sceneId) => {
+    setOpenDropdowns((prev) => ({
+      ...prev,
+      [sceneId]: !prev[sceneId],
+    }));
+  };
+
   const handleGenerate = async () => {
     // Validate that all scenes have prompts
-    const finalPrompt = ``;
     const emptyScenes = scenes.filter((scene) => !scene.prompt.trim());
     if (emptyScenes.length > 0) {
       alert("Please fill in all scene prompts before generating");
@@ -125,12 +154,33 @@ const SceneBuilderPage = () => {
     setIsGenerating(true);
 
     try {
+      // Create the output data structure
+      const outputData = {
+        success: true,
+        message: "Request processed successfully",
+        data: {
+          title: topic || "Animation Title",
+          scenes: scenes.map((scene) => ({
+            seq: scene.sequence || scene.id,
+            text: scene.prompt,
+            anim: scene.originalAnim || "",
+            duration_sec: scene.duration || 10,
+          })),
+        },
+        requestInfo: {
+          text: topic,
+          uid: user?.uid,
+          timestamp: new Date().toISOString(),
+        },
+        originalTopic: topic,
+        text: topic,
+      };
+
+      // Console log the data
+      console.log("Generated animation data:", outputData);
+
       // Here you would typically send the data to your backend
-      console.log("Generating animation with:", {
-        topic,
-        scenes,
-        uid: user?.uid,
-      });
+      console.log("Sending data to backend...");
 
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -245,6 +295,44 @@ const SceneBuilderPage = () => {
                       Math.min(e.target.scrollHeight, 300) + "px";
                   }}
                 />
+
+                {/* Advanced Settings Dropdown */}
+                <div className="mt-4">
+                  <button
+                    onClick={() => toggleDropdown(scene.id)}
+                    className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors text-sm"
+                  >
+                    <span>Advanced Settings</span>
+                    {openDropdowns[scene.id] ? (
+                      <FiChevronUp className="text-sm" />
+                    ) : (
+                      <FiChevronDown className="text-sm" />
+                    )}
+                  </button>
+
+                  {openDropdowns[scene.id] && (
+                    <div className="mt-3 p-4 bg-gray-800/30 border border-gray-600 rounded-lg">
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Animation Code
+                      </label>
+                      <textarea
+                        value={scene.originalAnim || ""}
+                        onChange={(e) =>
+                          updateSceneAnim(scene.id, e.target.value)
+                        }
+                        placeholder="Enter animation code..."
+                        className="w-full bg-gray-700/50 text-white placeholder:text-gray-500 border border-gray-600 rounded-lg p-3 text-sm min-h-[60px] max-h-[200px] resize-y overflow-y-auto focus:outline-none focus:border-white/50 transition-colors"
+                        style={{ height: "auto" }}
+                        data-anim-textarea
+                        onInput={(e) => {
+                          e.target.style.height = "auto";
+                          e.target.style.height =
+                            Math.min(e.target.scrollHeight, 200) + "px";
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>

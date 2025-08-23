@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { CgMenuGridO, CgClose } from "react-icons/cg";
 import { FiUser, FiLogOut } from "react-icons/fi";
 import { useAuth } from "@/context/AuthContext";
@@ -81,17 +82,29 @@ const Navbar = () => {
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors"
                 >
-                  <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
-                    <FiUser className="text-sm" />
-                  </div>
-                  <span className="text-sm">{user?.name || "User"}</span>
+                  {user?.photoURL ? (
+                    <Image
+                      src={user.photoURL}
+                      alt="User Avatar"
+                      width={32}
+                      height={32}
+                      className="w-8 h-8 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
+                      <FiUser className="text-sm" />
+                    </div>
+                  )}
+                  <span className="text-sm">
+                    {user?.displayName || user?.email || "User"}
+                  </span>
                 </button>
 
                 {showUserMenu && (
                   <div className="absolute right-0 mt-2 w-48 bg-gray-900 border border-gray-700 rounded-lg shadow-lg py-2 z-50">
                     <div className="px-4 py-2 border-b border-gray-700">
                       <p className="text-sm text-white font-medium">
-                        {user?.name}
+                        {user?.displayName || "User"}
                       </p>
                       <p className="text-xs text-gray-400">{user?.email}</p>
                     </div>

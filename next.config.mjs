@@ -6,6 +6,7 @@ const nextConfig = {
       "images.pexels.com",
       "lh3.googleusercontent.com",
       "cdn.pixabay.com",
+      "via.placeholder.com",
     ],
   },
   webpack: (config) => {

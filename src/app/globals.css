@@ -51,14 +51,26 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #170f02;
+  background: #000000;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #402a06;
+  background: #333333;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #523d05;
+  background: #555555;
+}
+
+/* Video black and white filter */
+video {
+  object-fit: cover;
+  background-size: cover;
+  background-position: center;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  filter: grayscale(100%) contrast(1.2);
 }

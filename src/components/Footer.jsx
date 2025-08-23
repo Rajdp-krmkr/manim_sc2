@@ -3,10 +3,7 @@ import { CgMail, CgFileDocument, CgCodeSlash } from "react-icons/cg";
 
 const Footer = () => {
   return (
-    <footer
-      id="contact"
-      className="bg-black border-t border-gray-800 py-12"
-    >
+    <footer id="contact" className="bg-black border-t border-gray-800 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
@@ -63,9 +60,7 @@ const Footer = () => {
 
           {/* Resources */}
           <div>
-            <h4 className="text-lg font-semibold text-white mb-4">
-              Resources
-            </h4>
+            <h4 className="text-lg font-semibold text-white mb-4">Resources</h4>
             <ul className="space-y-2">
               {[
                 "API Reference",

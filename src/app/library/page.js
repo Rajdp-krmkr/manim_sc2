@@ -160,6 +160,13 @@ const LibraryPage = () => {
               </button>
             </div>
             <div className="flex items-center space-x-4">
+              <button
+                onClick={() => router.push("/generate")}
+                className="bg-white text-black px-6 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors flex items-center space-x-2"
+              >
+                <FiEdit3 className="text-lg" />
+                <span>Create New</span>
+              </button>
               <span className="text-sm text-gray-400">
                 Welcome back, {user?.name}
               </span>

@@ -12,29 +12,28 @@ const AuthPage = () => {
 
   const handleGoogleAuth = async () => {
     setIsLoading(true);
-    
+
     try {
       // Simulate Google OAuth flow
       // In a real app, you would integrate with Google OAuth or NextAuth.js
       console.log("Initiating Google OAuth...");
-      
+
       // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
       // Simulate successful authentication
       const userData = {
         id: "google_123",
         name: "John Doe",
         email: "john.doe@gmail.com",
-        avatar: "https://via.placeholder.com/40"
+        avatar: "https://via.placeholder.com/40",
       };
-      
+
       // Use auth context to sign in
       signIn(userData);
-      
+
       // Redirect to home
       router.push("/");
-      
     } catch (error) {
       console.error("Authentication failed:", error);
     } finally {
@@ -63,7 +62,6 @@ const AuthPage = () => {
       {/* Auth Container */}
       <div className="relative z-10 w-full max-w-md mx-4">
         <div className="bg-gray-900/80 backdrop-blur-xl border border-gray-700 rounded-2xl p-8 shadow-2xl">
-          
           {/* Header */}
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
@@ -75,13 +73,13 @@ const AuthPage = () => {
               Welcome to MathVision AI
             </h1>
             <p className="text-gray-300 text-sm">
-              Sign in or create your account to start creating amazing mathematical animations
+              Sign in or create your account to start creating amazing
+              mathematical animations
             </p>
           </div>
 
           {/* Auth Methods */}
           <div className="space-y-4">
-            
             {/* Google Sign In Button */}
             <button
               onClick={handleGoogleAuth}
@@ -149,7 +147,8 @@ const AuthPage = () => {
         {/* Additional Info */}
         <div className="mt-6 text-center">
           <p className="text-gray-400 text-sm">
-            New to MathVision AI? Google sign-in will automatically create your account.
+            New to MathVision AI? Google sign-in will automatically create your
+            account.
           </p>
         </div>
       </div>

@@ -366,9 +366,7 @@ const VideoGenerationPage = () => {
         {/* Video Header */}
         <div className="bg-gray-900 p-4 border-b border-gray-700">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-bold text-white">
-              Animation Preview
-            </h2>
+            <h2 className="text-xl font-bold text-white">Animation Preview</h2>
             <button
               onClick={() => router.push("/")}
               className="text-gray-300 hover:text-white px-3 py-1 rounded border border-gray-700 hover:border-white transition-all text-sm"

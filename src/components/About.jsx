@@ -35,9 +35,7 @@ const About = () => {
                   </span>
                 </div>
                 <div className="bg-gray-900/80 backdrop-blur-sm px-4 py-2 rounded-lg border border-gray-700">
-                  <span className="text-white font-semibold">
-                    Open Source
-                  </span>
+                  <span className="text-white font-semibold">Open Source</span>
                 </div>
               </div>
             </div>

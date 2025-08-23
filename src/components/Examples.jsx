@@ -4,14 +4,14 @@ import { useRouter } from "next/navigation";
 
 const Examples = ({ setPrompt, isAuthenticated }) => {
   const router = useRouter();
-  
+
   const handleTryExample = (example) => {
     if (!isAuthenticated) {
       // Redirect to auth page if not authenticated
-      router.push('/auth');
+      router.push("/auth");
       return;
     }
-    
+
     // If authenticated, proceed to generate page
     router.push(`/generate?prompt=${encodeURIComponent(example.prompt)}`);
   };

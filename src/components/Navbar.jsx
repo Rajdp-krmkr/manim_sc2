@@ -34,7 +34,7 @@ const Navbar = () => {
   ];
 
   // Add Library link for authenticated users
-  const authenticatedNavItems = isAuthenticated 
+  const authenticatedNavItems = isAuthenticated
     ? [
         { name: "Home", href: "#home" },
         { name: "Library", href: "/library" },
@@ -86,11 +86,13 @@ const Navbar = () => {
                   </div>
                   <span className="text-sm">{user?.name || "User"}</span>
                 </button>
-                
+
                 {showUserMenu && (
                   <div className="absolute right-0 mt-2 w-48 bg-gray-900 border border-gray-700 rounded-lg shadow-lg py-2 z-50">
                     <div className="px-4 py-2 border-b border-gray-700">
-                      <p className="text-sm text-white font-medium">{user?.name}</p>
+                      <p className="text-sm text-white font-medium">
+                        {user?.name}
+                      </p>
                       <p className="text-xs text-gray-400">{user?.email}</p>
                     </div>
                     <button

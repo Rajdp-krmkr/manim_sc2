@@ -37,8 +37,8 @@ const Features = () => {
             Powerful Features
           </h2>
           <p className="text-yellow-500 text-lg max-w-2xl mx-auto">
-            Discover the capabilities that make Manim the perfect tool for
-            creating mathematical animations
+            Discover the capabilities that make MathVision AI the perfect tool
+            for creating mathematical animations
           </p>
         </div>
 

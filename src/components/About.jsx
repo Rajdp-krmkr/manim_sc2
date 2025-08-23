@@ -8,19 +8,19 @@ const About = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div>
             <h2 className="text-4xl font-bold text-yellow-300 mb-6">
-              About Manim
+              About MathVision AI
             </h2>
             <div className="space-y-6">
               <p className="text-yellow-400 text-lg leading-relaxed">
-                Manim is a powerful engine for creating precise mathematical
-                animations. Originally created by Grant Sanderson (3Blue1Brown),
-                it has become the go-to tool for educators, researchers, and
-                content creators worldwide.
+                MathVision AI is a powerful engine for creating precise
+                mathematical animations. Originally created by Grant Sanderson
+                (3Blue1Brown), it has become the go-to tool for educators,
+                researchers, and content creators worldwide.
               </p>
               <p className="text-yellow-400 text-lg leading-relaxed">
-                Our platform makes Manim accessible to everyone through natural
-                language prompts, eliminating the need to write complex code
-                while maintaining the precision and beauty of mathematical
+                Our platform makes MathVision AI accessible to everyone through
+                natural language prompts, eliminating the need to write complex
+                code while maintaining the precision and beauty of mathematical
                 visualizations.
               </p>
               <div className="flex flex-wrap gap-4">

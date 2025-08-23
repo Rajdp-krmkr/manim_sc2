@@ -1,6 +1,9 @@
+"use client";
 import React from "react";
+import { useRouter } from "next/navigation";
 
 const Examples = ({ setPrompt }) => {
+  const router = useRouter();
   const examples = [
     {
       title: "Calculus Derivatives",
@@ -80,8 +83,9 @@ const Examples = ({ setPrompt }) => {
                 <button
                   className="bg-[#2d1d04] text-yellow-400 px-4 py-2 rounded-lg hover:bg-[#523d05] transition-all duration-300 text-sm"
                   onClick={() => {
-                    setPrompt(example.prompt);
-                    window.location.href = "#";
+                    router.push(
+                      `/generate?prompt=${encodeURIComponent(example.prompt)}`
+                    );
                   }}
                 >
                   Try This Example

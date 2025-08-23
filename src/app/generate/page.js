@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useGeneration } from "@/context/GenerationContext";
 import {
   FiSend,
   FiDownload,
@@ -20,6 +21,7 @@ import {
 const VideoGenerationPage = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { generationData, clearGenerationData } = useGeneration();
   const [initialPrompt, setInitialPrompt] = useState("");
   const [chatMessages, setChatMessages] = useState([]);
   const [currentMessage, setCurrentMessage] = useState("");
@@ -38,54 +40,67 @@ const VideoGenerationPage = () => {
   const chatEndRef = useRef(null);
 
   useEffect(() => {
-    // Get the initial prompt from URL params
-    const prompt = searchParams.get("prompt") || "Default math animation";
-    setInitialPrompt(prompt);
+    // Check if we have generation data from context
+    if (generationData) {
+      console.log("Generation data received:", generationData);
 
-    // Add initial message to chat
-    setChatMessages([
-      {
-        id: 1,
-        type: "user",
-        content: prompt,
-        timestamp: new Date(),
-      },
-      {
-        id: 2,
-        type: "system",
-        content: "Generating your mathematical animation...",
-        timestamp: new Date(),
-      },
-    ]);
+      // Use the original prompt/topic that was submitted
+      const prompt =
+        generationData.originalTopic ||
+        generationData.text ||
+        generationData.prompt ||
+        "";
+      setInitialPrompt(prompt);
 
-    // Simulate video generation with loader
-    setTimeout(() => {
-      setVideoData({
-        title: "Mathematical Animation",
-        description: `Animation generated from prompt: "${prompt}"`,
-        duration: "0:15",
-        resolution: "1920x1080",
-        fps: "60 FPS",
-        format: "MP4",
-        size: "2.3 MB",
-        videoUrl: "/assests/heroVid.mp4", // Using the existing video as demo
-        thumbnail: "/assests/heroVid.mp4",
-      });
-
-      setChatMessages((prev) => [
-        ...prev.slice(0, -1), // Remove loading message
+      // Add initial message to chat
+      setChatMessages([
         {
-          id: Date.now(),
-          type: "assistant",
-          content:
-            "✅ Your mathematical animation has been successfully generated! You can preview it on the right side.",
+          id: 1,
+          type: "user",
+          content: prompt,
+          timestamp: new Date(),
+        },
+        {
+          id: 2,
+          type: "system",
+          content: "Processing your request...",
           timestamp: new Date(),
         },
       ]);
 
-      setIsLoading(false);
-    }, 3000); // 3 second loading simulation
-  }, [searchParams]);
+      // Simulate video generation with loader
+      setTimeout(() => {
+        setVideoData({
+          title: "Mathematical Animation",
+          description: `Animation generated from prompt: "${prompt}"`,
+          duration: "0:15",
+          resolution: "1920x1080",
+          fps: "60 FPS",
+          format: "MP4",
+          size: "2.3 MB",
+          videoUrl: "/assests/heroVid.mp4", // Using the existing video as demo
+          thumbnail: "/assests/heroVid.mp4",
+          generationResponse: generationData, // Store the actual API response
+        });
+
+        setChatMessages((prev) => [
+          ...prev.slice(0, -1), // Remove loading message
+          {
+            id: Date.now(),
+            type: "assistant",
+            content:
+              "✅ Your mathematical animation has been successfully generated! You can preview it on the right side.",
+            timestamp: new Date(),
+          },
+        ]);
+
+        setIsLoading(false);
+      }, 3000); // 3 second loading simulation
+    } else {
+      // If no generation data, redirect back to home
+      router.push("/");
+    }
+  }, [generationData, router]);
 
   useEffect(() => {
     // Auto-scroll chat to bottom
@@ -281,15 +296,15 @@ const VideoGenerationPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#170f02] flex">
+    <div className="min-h-screen bg-black flex">
       {/* Left Side - Chat Interface */}
-      <div className="w-1/2 border-r border-[#402a06] flex flex-col">
+      <div className="w-1/2 border-r border-gray-700 flex flex-col">
         {/* Chat Header */}
-        <div className="bg-[#2d1d04] p-4 border-b border-[#402a06]">
-          <h2 className="text-xl font-bold text-yellow-300 mb-2">
-            MathVision AI Assistant
+        <div className="bg-gray-900 p-4 border-b border-gray-700">
+          <h2 className="text-xl font-bold text-white mb-2">
+            manimate Assistant
           </h2>
-          <p className="text-yellow-500 text-sm">
+          <p className="text-gray-300 text-sm">
             Continue refining your animation with natural language
           </p>
         </div>
@@ -306,18 +321,18 @@ const VideoGenerationPage = () => {
               <div
                 className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                   message.type === "user"
-                    ? "bg-yellow-300 text-[#170f02]"
+                    ? "bg-white text-black"
                     : message.type === "system"
-                    ? "bg-[#2d1d04] text-yellow-400 border border-[#402a06]"
-                    : "bg-[#170f02ce] text-yellow-300 border border-[#402a06]"
+                    ? "bg-gray-800 text-white border border-gray-600"
+                    : "bg-gray-900/80 text-white border border-gray-700"
                 }`}
               >
                 <p className="text-sm">{message.content}</p>
                 <p
                   className={`text-xs mt-1 ${
                     message.type === "user"
-                      ? "text-[#170f02] opacity-70"
-                      : "text-yellow-500"
+                      ? "text-black opacity-70"
+                      : "text-gray-400"
                   }`}
                 >
                   {formatTime(message.timestamp)}
@@ -327,9 +342,9 @@ const VideoGenerationPage = () => {
           ))}
           {isGenerating && (
             <div className="flex justify-start">
-              <div className="bg-[#170f02ce] text-yellow-300 border border-[#402a06] px-4 py-2 rounded-lg">
+              <div className="bg-gray-900/80 text-white border border-gray-700 px-4 py-2 rounded-lg">
                 <div className="flex items-center space-x-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-300"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                   <span className="text-sm">Generating...</span>
                 </div>
               </div>
@@ -339,7 +354,7 @@ const VideoGenerationPage = () => {
         </div>
 
         {/* Chat Input */}
-        <div className="p-4 border-t border-[#402a06] bg-[#0f0702]">
+        <div className="p-4 border-t border-gray-700 bg-black">
           <div className="flex space-x-2">
             <input
               type="text"
@@ -347,13 +362,13 @@ const VideoGenerationPage = () => {
               onChange={(e) => setCurrentMessage(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
               placeholder="Describe changes or ask questions..."
-              className="flex-1 bg-[#170f02ce] text-yellow-300 placeholder-yellow-600 px-4 py-2 rounded-lg border border-[#402a06] focus:outline-none focus:border-yellow-300"
+              className="flex-1 bg-gray-900/80 text-white placeholder-gray-400 px-4 py-2 rounded-lg border border-gray-700 focus:outline-none focus:border-white"
               disabled={isGenerating}
             />
             <button
               onClick={handleSendMessage}
               disabled={isGenerating || !currentMessage.trim()}
-              className="bg-yellow-300 text-[#170f02] px-4 py-2 rounded-lg hover:bg-yellow-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-white text-black px-4 py-2 rounded-lg hover:bg-gray-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <FiSend className="text-lg" />
             </button>
@@ -364,14 +379,12 @@ const VideoGenerationPage = () => {
       {/* Right Side - Video Interface */}
       <div className="w-1/2 flex flex-col">
         {/* Video Header */}
-        <div className="bg-[#2d1d04] p-4 border-b border-[#402a06]">
+        <div className="bg-gray-900 p-4 border-b border-gray-700">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-bold text-yellow-300">
-              Animation Preview
-            </h2>
+            <h2 className="text-xl font-bold text-white">Animation Preview</h2>
             <button
               onClick={() => router.push("/")}
-              className="text-yellow-400 hover:text-yellow-300 px-3 py-1 rounded border border-[#402a06] hover:border-yellow-300 transition-all text-sm"
+              className="text-gray-300 hover:text-white px-3 py-1 rounded border border-gray-700 hover:border-white transition-all text-sm"
             >
               ← Back to Home
             </button>
@@ -382,29 +395,29 @@ const VideoGenerationPage = () => {
         <div className="flex-1 flex flex-col">
           {isLoading ? (
             // Loading State
-            <div className="flex-1 flex items-center justify-center bg-[#0f0702]">
+            <div className="flex-1 flex items-center justify-center bg-black">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-yellow-300 mx-auto mb-4"></div>
-                <h3 className="text-xl font-semibold text-yellow-300 mb-2">
+                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mx-auto mb-4"></div>
+                <h3 className="text-xl font-semibold text-white mb-2">
                   Generating Animation
                 </h3>
-                <p className="text-yellow-500 mb-4">
+                <p className="text-gray-300 mb-4">
                   Creating your mathematical visualization...
                 </p>
-                <div className="bg-[#170f02ce] rounded-lg p-4 border border-[#402a06] max-w-md">
-                  <div className="flex justify-between text-sm text-yellow-400 mb-2">
+                <div className="bg-gray-900/80 rounded-lg p-4 border border-gray-700 max-w-md">
+                  <div className="flex justify-between text-sm text-gray-300 mb-2">
                     <span>Progress</span>
                     <span>85%</span>
                   </div>
-                  <div className="w-full bg-[#2d1d04] rounded-full h-2">
-                    <div className="bg-yellow-300 h-2 rounded-full w-4/5 animate-pulse"></div>
+                  <div className="w-full bg-gray-800 rounded-full h-2">
+                    <div className="bg-white h-2 rounded-full w-4/5 animate-pulse"></div>
                   </div>
                 </div>
               </div>
             </div>
           ) : (
             // Video Player
-            <div className="flex-1 p-4 bg-[#0f0702]">
+            <div className="flex-1 p-4 bg-black">
               <div
                 ref={videoContainerRef}
                 className="bg-black rounded-lg overflow-hidden mb-4 relative group"
@@ -428,7 +441,7 @@ const VideoGenerationPage = () => {
                   <div className="absolute top-4 right-4 flex items-center space-x-2">
                     <button
                       onClick={toggleFullscreen}
-                      className="bg-black/50 text-white p-2 rounded-full hover:bg-yellow-300 hover:text-black transition-all"
+                      className="bg-black/50 text-white p-2 rounded-full hover:bg-white hover:text-black transition-all"
                       title={
                         isFullscreen ? "Exit fullscreen" : "Enter fullscreen"
                       }
@@ -439,7 +452,7 @@ const VideoGenerationPage = () => {
                         <FiMaximize2 className="text-lg" />
                       )}
                     </button>
-                    <button className="bg-black/50 text-white p-2 rounded-full hover:bg-yellow-300 hover:text-black transition-all">
+                    <button className="bg-black/50 text-white p-2 rounded-full hover:bg-white hover:text-black transition-all">
                       <FiSettings className="text-lg" />
                     </button>
                   </div>
@@ -449,7 +462,7 @@ const VideoGenerationPage = () => {
                     <div className="absolute inset-0 flex items-center justify-center">
                       <button
                         onClick={togglePlayPause}
-                        className="bg-yellow-300 text-[#170f02] p-4 rounded-full hover:bg-yellow-200 transition-all transform hover:scale-110"
+                        className="bg-white text-black p-4 rounded-full hover:bg-gray-200 transition-all transform hover:scale-110"
                       >
                         <FiPlay className="text-3xl ml-1" />
                       </button>
@@ -468,7 +481,7 @@ const VideoGenerationPage = () => {
                         onChange={handleSeek}
                         className="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer slider"
                         style={{
-                          background: `linear-gradient(to right, #fbbf24 0%, #fbbf24 ${
+                          background: `linear-gradient(to right, #ffffff 0%, #ffffff ${
                             duration ? (currentTime / duration) * 100 : 0
                           }%, #4b5563 ${
                             duration ? (currentTime / duration) * 100 : 0
@@ -529,7 +542,7 @@ const VideoGenerationPage = () => {
                             onChange={handleVolumeChange}
                             className="w-20 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
                             style={{
-                              background: `linear-gradient(to right, #fbbf24 0%, #fbbf24 ${
+                              background: `linear-gradient(to right, #ffffff 0%, #ffffff ${
                                 (isMuted ? 0 : volume) * 100
                               }%, #4b5563 ${
                                 (isMuted ? 0 : volume) * 100
@@ -554,37 +567,37 @@ const VideoGenerationPage = () => {
               </div>
 
               {/* Video Details */}
-              <div className="bg-[#170f02ce] rounded-lg p-4 border border-[#402a06]">
-                <h3 className="text-lg font-semibold text-yellow-300 mb-3">
+              <div className="bg-gray-900/80 rounded-lg p-4 border border-gray-700">
+                <h3 className="text-lg font-semibold text-white mb-3">
                   {videoData?.title}
                 </h3>
-                <p className="text-yellow-400 text-sm mb-4">
+                <p className="text-gray-300 text-sm mb-4">
                   {videoData?.description}
                 </p>
 
                 <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="flex items-center space-x-2 text-yellow-500 text-sm">
+                  <div className="flex items-center space-x-2 text-gray-400 text-sm">
                     <FiClock />
                     <span>Duration: {videoData?.duration}</span>
                   </div>
-                  <div className="flex items-center space-x-2 text-yellow-500 text-sm">
+                  <div className="flex items-center space-x-2 text-gray-400 text-sm">
                     <FiFile />
                     <span>Format: {videoData?.format}</span>
                   </div>
-                  <div className="text-yellow-500 text-sm">
+                  <div className="text-gray-400 text-sm">
                     Resolution: {videoData?.resolution}
                   </div>
-                  <div className="text-yellow-500 text-sm">
+                  <div className="text-gray-400 text-sm">
                     Size: {videoData?.size}
                   </div>
                 </div>
 
                 <div className="flex space-x-3">
-                  <button className="flex-1 bg-yellow-300 text-[#170f02] py-2 px-4 rounded-lg font-semibold hover:bg-yellow-200 transition-all flex items-center justify-center space-x-2">
+                  <button className="flex-1 bg-white text-black py-2 px-4 rounded-lg font-semibold hover:bg-gray-200 transition-all flex items-center justify-center space-x-2">
                     <FiDownload />
                     <span>Download HD</span>
                   </button>
-                  <button className="flex-1 border border-yellow-300 text-yellow-300 py-2 px-4 rounded-lg font-semibold hover:bg-yellow-300 hover:text-[#170f02] transition-all">
+                  <button className="flex-1 border border-white text-white py-2 px-4 rounded-lg font-semibold hover:bg-white hover:text-black transition-all">
                     Share
                   </button>
                 </div>

@@ -1,9 +1,30 @@
 "use client";
 import React from "react";
 import { useRouter } from "next/navigation";
+import { useGeneration } from "@/context/GenerationContext";
 
-const Examples = ({ setPrompt }) => {
+const Examples = ({ setTopic, isAuthenticated }) => {
   const router = useRouter();
+  const { setGenerationResponse } = useGeneration();
+
+  const handleTryExample = (example) => {
+    if (!isAuthenticated) {
+      // Redirect to auth page if not authenticated
+      router.push("/auth");
+      return;
+    }
+
+    // Store the example topic in generation context
+    setGenerationResponse({
+      originalTopic: example.prompt,
+      text: example.prompt,
+      prompt: example.prompt,
+      isExample: true,
+    });
+
+    // If authenticated, proceed to scene builder page
+    router.push("/scene-builder");
+  };
   const examples = [
     {
       title: "Calculus Derivatives",
@@ -48,13 +69,13 @@ const Examples = ({ setPrompt }) => {
   ];
 
   return (
-    <section id="examples" className="py-20 bg-[#170f02] relative">
+    <section id="examples" className="py-20 bg-black relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-yellow-300 mb-4">
+          <h2 className="text-4xl font-bold text-white mb-4">
             Example Animations
           </h2>
-          <p className="text-yellow-500 text-lg max-w-2xl mx-auto">
+          <p className="text-gray-300 text-lg max-w-2xl mx-auto">
             Get inspired by these examples of what you can create with simple
             text prompts
           </p>
@@ -64,34 +85,30 @@ const Examples = ({ setPrompt }) => {
           {examples.map((example, index) => (
             <div
               key={index}
-              className="bg-[#170f02ce] backdrop-blur-sm p-6 rounded-xl border border-[#402a06] hover:border-[#523d05] transition-all duration-300 hover:transform hover:scale-105"
+              className="bg-gray-900/80 backdrop-blur-sm p-6 rounded-xl border border-gray-700 hover:border-gray-600 transition-all duration-300 hover:transform hover:scale-105"
             >
               <div className="mb-4">
-                <h3 className="text-xl font-semibold text-yellow-300 mb-3">
+                <h3 className="text-xl font-semibold text-white mb-3">
                   {example.title}
                 </h3>
-                <div className="bg-[#2d1d04] p-4 rounded-lg border border-[#402a06] mb-4">
-                  <p className="text-[#c18e3d] text-sm italic">
+                <div className="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-4">
+                  <p className="text-gray-300 text-sm italic">
                     &ldquo;{example.prompt}&rdquo;
                   </p>
                 </div>
-                <p className="text-yellow-400 text-sm leading-relaxed">
+                <p className="text-gray-400 text-sm leading-relaxed">
                   {example.description}
                 </p>
               </div>
               <div className="flex justify-between items-center">
                 <button
-                  className="bg-[#2d1d04] text-yellow-400 px-4 py-2 rounded-lg hover:bg-[#523d05] transition-all duration-300 text-sm"
-                  onClick={() => {
-                    router.push(
-                      `/generate?prompt=${encodeURIComponent(example.prompt)}`
-                    );
-                  }}
+                  className="bg-white text-black px-4 py-2 rounded-lg hover:bg-gray-200 transition-all duration-300 text-sm font-medium"
+                  onClick={() => handleTryExample(example)}
                 >
-                  Try This Example
+                  {isAuthenticated ? "Try This Example" : "Sign In to Try"}
                 </button>
-                <div className="w-12 h-12 bg-[#2d1d04] rounded-lg border border-[#402a06] flex items-center justify-center">
-                  <div className="w-6 h-6 bg-yellow-300 rounded opacity-20"></div>
+                <div className="w-12 h-12 bg-gray-800 rounded-lg border border-gray-700 flex items-center justify-center">
+                  <div className="w-6 h-6 bg-white rounded opacity-30"></div>
                 </div>
               </div>
             </div>

@@ -663,9 +663,9 @@ Try streaming videos from your Express server!`,
   };
 
   return (
-    <div className="min-h-screen bg-black flex">
+    <div className="min-h-screen bg-black flex max-h-screen">
       {/* Left Side - Chat Interface */}
-      <div className="w-1/2 border-r border-gray-700 flex flex-col">
+      <div className="w-1/2 border-r max-h-screen border-gray-700 flex flex-col">
         {/* Chat Header */}
         <div className="bg-gray-900 p-4 border-b border-gray-700">
           <h2 className="text-xl font-bold text-white mb-2">
@@ -744,7 +744,7 @@ Try streaming videos from your Express server!`,
       </div>
 
       {/* Right Side - Video Interface */}
-      <div className="w-1/2 flex flex-col">
+      <div className="w-1/2 flex flex-col max-h-full overflow-y-auto">
         {/* Video Header */}
         <div className="bg-gray-900 p-4 border-b border-gray-700">
           <div className="flex justify-between items-center mb-2">
@@ -940,70 +940,299 @@ Try streaming videos from your Express server!`,
         </div>
 
         {/* Video Player Area */}
-        <div
-          ref={videoContainerRef}
-          className="flex-1 bg-black relative flex flex-col items-center justify-center"
-        >
+        <div className="flex-1 flex flex-col bg-black">
+          {/* Video Container - Top Section */}
+          <div className="relative bg-black">
+            {selectedVideo ? (
+              <div className="relative">
+                <video
+                  ref={videoRef}
+                  src={`${SERVER_URL}/stream/${encodeURIComponent(
+                    selectedVideo
+                  )}`}
+                  className="w-full h-64 md:h-80 object-contain bg-black"
+                  crossOrigin="anonymous"
+                  preload="metadata"
+                  onClick={togglePlayPause}
+                  onLoadedMetadata={() => {
+                    console.log("Video metadata loaded:", {
+                      duration: videoRef.current?.duration,
+                      videoWidth: videoRef.current?.videoWidth,
+                      videoHeight: videoRef.current?.videoHeight,
+                    });
+                    if (videoRef.current) {
+                      setDuration(videoRef.current.duration);
+                    }
+                  }}
+                  onTimeUpdate={() => {
+                    if (videoRef.current) {
+                      setCurrentTime(videoRef.current.currentTime);
+                    }
+                  }}
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                  onError={(e) => {
+                    console.error("Video error:", e);
+                    setChatMessages((prev) => [
+                      ...prev,
+                      {
+                        id: Date.now(),
+                        type: "assistant",
+                        content: `❌ Error loading video: ${selectedVideo}. Check server connection.`,
+                        timestamp: new Date(),
+                      },
+                    ]);
+                  }}
+                  onCanPlay={() => {
+                    console.log("Video can play");
+                    setChatMessages((prev) => [
+                      ...prev,
+                      {
+                        id: Date.now(),
+                        type: "assistant",
+                        content: `✅ Video "${selectedVideo}" is ready to play!`,
+                        timestamp: new Date(),
+                      },
+                    ]);
+                  }}
+                />
+
+                {/* Custom Video Overlay Controls */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300">
+                  {/* Center Play Button */}
+                  {!isPlaying && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <button
+                        onClick={togglePlayPause}
+                        className="bg-white/20 backdrop-blur-sm text-white p-4 rounded-full hover:bg-white/30 transition-all transform hover:scale-110"
+                      >
+                        <FiPlay className="text-3xl ml-1" />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Top Right Controls */}
+                  <div className="absolute top-4 right-4 flex items-center space-x-2">
+                    <button
+                      onClick={toggleFullscreen}
+                      className="bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-all"
+                      title={
+                        isFullscreen ? "Exit fullscreen" : "Enter fullscreen"
+                      }
+                    >
+                      {isFullscreen ? <FiMinimize2 /> : <FiMaximize2 />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="h-64 md:h-80 bg-gray-900 flex items-center justify-center">
+                <div className="text-center text-gray-400">
+                  <FiFile className="text-6xl mx-auto mb-4 opacity-50" />
+                  <p className="text-lg mb-2">No video selected</p>
+                  <p className="text-sm">
+                    Select a video from the list above to start streaming
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Custom Playback Controls Bar */}
           {selectedVideo && (
-            <video
-              ref={videoRef}
-              src={`${SERVER_URL}/stream/${encodeURIComponent(selectedVideo)}`}
-              controls
-              className="w-full h-full"
-              crossOrigin="anonymous"
-              preload="metadata"
-              onLoadedMetadata={() => {
-                console.log("Video metadata loaded:", {
-                  duration: videoRef.current?.duration,
-                  videoWidth: videoRef.current?.videoWidth,
-                  videoHeight: videoRef.current?.videoHeight,
-                });
-                if (videoRef.current) {
-                  setDuration(videoRef.current.duration);
-                }
-              }}
-              onTimeUpdate={() => {
-                if (videoRef.current) {
-                  setCurrentTime(videoRef.current.currentTime);
-                }
-              }}
-              onPlay={() => setIsPlaying(true)}
-              onPause={() => setIsPlaying(false)}
-              onError={(e) => {
-                console.error("Video error:", e);
-                setChatMessages((prev) => [
-                  ...prev,
-                  {
-                    id: Date.now(),
-                    type: "assistant",
-                    content: `❌ Error loading video: ${selectedVideo}. Check server connection.`,
-                    timestamp: new Date(),
-                  },
-                ]);
-              }}
-              onCanPlay={() => {
-                console.log("Video can play");
-                setChatMessages((prev) => [
-                  ...prev,
-                  {
-                    id: Date.now(),
-                    type: "assistant",
-                    content: `✅ Video "${selectedVideo}" is ready to play!`,
-                    timestamp: new Date(),
-                  },
-                ]);
-              }}
-            />
-          )}
-          {!selectedVideo && (
-            <div className="text-center text-gray-400">
-              <FiFile className="text-6xl mx-auto mb-4 opacity-50" />
-              <p className="text-lg mb-2">No video selected</p>
-              <p className="text-sm">
-                Select a video from the list above to start streaming
-              </p>
+            <div className="bg-gray-900 p-4 border-t border-gray-700">
+              {/* Progress Bar */}
+              <div className="mb-4">
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={duration ? (currentTime / duration) * 100 : 0}
+                  onChange={handleSeek}
+                  className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                  style={{
+                    background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${
+                      duration ? (currentTime / duration) * 100 : 0
+                    }%, #374151 ${
+                      duration ? (currentTime / duration) * 100 : 0
+                    }%, #374151 100%)`,
+                  }}
+                />
+              </div>
+
+              {/* Control Buttons Row */}
+              <div className="flex items-center justify-between">
+                {/* Left Side Controls */}
+                <div className="flex items-center space-x-4">
+                  <button
+                    onClick={togglePlayPause}
+                    className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full transition-all"
+                  >
+                    {isPlaying ? (
+                      <FiPause className="text-xl" />
+                    ) : (
+                      <FiPlay className="text-xl ml-0.5" />
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => skipTime(-10)}
+                    className="text-white hover:text-blue-400 transition-colors p-2"
+                    title="Skip back 10s"
+                  >
+                    <FiSkipBack className="text-lg" />
+                  </button>
+
+                  <button
+                    onClick={() => skipTime(10)}
+                    className="text-white hover:text-blue-400 transition-colors p-2"
+                    title="Skip forward 10s"
+                  >
+                    <FiSkipForward className="text-lg" />
+                  </button>
+
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={toggleMute}
+                      className="text-white hover:text-blue-400 transition-colors p-1"
+                    >
+                      {isMuted ? <FiVolumeX /> : <FiVolume2 />}
+                    </button>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.1"
+                      value={isMuted ? 0 : volume}
+                      onChange={handleVolumeChange}
+                      className="w-20 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                    />
+                  </div>
+                </div>
+
+                {/* Right Side Info */}
+                <div className="flex items-center space-x-4 text-sm text-gray-300">
+                  <span className="font-mono">
+                    {formatVideoTime(currentTime)} / {formatVideoTime(duration)}
+                  </span>
+                  <div className="flex items-center space-x-1 text-green-400">
+                    <FiWifi className="text-sm" />
+                    <span>Streaming</span>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
+
+          {/* Video Details Section */}
+          <div className="flex-1 p-4 bg-gray-900 overflow-y-auto">
+            {selectedVideo ? (
+              <div>
+                {/* Video Title */}
+                <h3 className="text-xl font-bold text-white mb-2">
+                  {selectedVideo}
+                </h3>
+                <p className="text-gray-400 text-sm mb-4">
+                  Streaming from Express server with range support
+                </p>
+
+                {/* Video Stats Grid */}
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="bg-gray-800 p-3 rounded-lg">
+                    <div className="flex items-center space-x-2 text-blue-400 mb-1">
+                      <FiClock className="text-sm" />
+                      <span className="text-xs font-semibold">Duration</span>
+                    </div>
+                    <p className="text-white font-mono">
+                      {formatVideoTime(duration) || "Loading..."}
+                    </p>
+                  </div>
+
+                  <div className="bg-gray-800 p-3 rounded-lg">
+                    <div className="flex items-center space-x-2 text-green-400 mb-1">
+                      <FiWifi className="text-sm" />
+                      <span className="text-xs font-semibold">Source</span>
+                    </div>
+                    <p className="text-white text-sm">Express Server</p>
+                  </div>
+
+                  <div className="bg-gray-800 p-3 rounded-lg">
+                    <div className="flex items-center space-x-2 text-purple-400 mb-1">
+                      <FiFile className="text-sm" />
+                      <span className="text-xs font-semibold">Format</span>
+                    </div>
+                    <p className="text-white text-sm">MP4</p>
+                  </div>
+
+                  <div className="bg-gray-800 p-3 rounded-lg">
+                    <div className="flex items-center space-x-2 text-yellow-400 mb-1">
+                      <FiSettings className="text-sm" />
+                      <span className="text-xs font-semibold">Quality</span>
+                    </div>
+                    <p className="text-white text-sm">HD</p>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex space-x-3 mb-6">
+                  <button
+                    onClick={() => {
+                      const downloadUrl = `${SERVER_URL}/download/${encodeURIComponent(
+                        selectedVideo
+                      )}`;
+                      window.open(downloadUrl, "_blank");
+                    }}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-semibold transition-all flex items-center justify-center space-x-2"
+                  >
+                    <FiDownload />
+                    <span>Download</span>
+                  </button>
+                  <button className="flex-1 border border-gray-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-gray-800 transition-all">
+                    Share
+                  </button>
+                </div>
+
+                {/* Available Videos Quick List */}
+                {availableVideos.length > 1 && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-white mb-3 flex items-center space-x-2">
+                      <FiFile className="text-blue-400" />
+                      <span>Switch Video</span>
+                    </h4>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {availableVideos
+                        .filter((video) => video.name !== selectedVideo)
+                        .map((video, index) => (
+                          <button
+                            key={index}
+                            onClick={() => streamVideoFromServer(video.name)}
+                            className="w-full text-left p-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition-all flex items-center justify-between group"
+                          >
+                            <span className="text-gray-300 group-hover:text-white text-sm truncate">
+                              {video.name}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {(video.size / 1024 / 1024).toFixed(1)}MB
+                            </span>
+                          </button>
+                        ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center text-gray-400 py-12">
+                <FiFile className="text-4xl mx-auto mb-4 opacity-50" />
+                <h3 className="text-lg font-semibold mb-2">
+                  No Video Selected
+                </h3>
+                <p className="text-sm">
+                  Choose a video from the selection panel above to view details
+                  and start streaming.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useGeneration } from "@/context/GenerationContext";
@@ -23,7 +23,8 @@ import {
   FiX,
 } from "react-icons/fi";
 
-const SceneBuilderPage = () => {
+// Component that uses useSearchParams - needs to be wrapped in Suspense
+const SceneBuilderContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -1278,6 +1279,28 @@ const SceneBuilderPage = () => {
         </div>
       )}
     </div>
+  );
+};
+
+// Main component with Suspense wrapper
+const SceneBuilderPage = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
+          <div className="text-center">
+            <div className="relative mb-6">
+              <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-white mx-auto"></div>
+            </div>
+            <h3 className="text-white text-lg font-semibold mb-2">
+              Loading scene builder...
+            </h3>
+          </div>
+        </div>
+      }
+    >
+      <SceneBuilderContent />
+    </Suspense>
   );
 };
 

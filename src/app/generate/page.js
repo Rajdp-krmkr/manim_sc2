@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, suspense, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useGeneration } from "@/context/GenerationContext";
 import {
@@ -20,7 +20,7 @@ import {
   FiWifiOff,
 } from "react-icons/fi";
 
-const VideoGenerationPage = () => {
+const VideoGenerationComp = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { generationData, clearGenerationData } = useGeneration();
@@ -1239,4 +1239,23 @@ Try streaming videos from your Express server!`,
   );
 };
 
-export default VideoGenerationPage;
+export default function VideoGenerationPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
+          <div className="text-center">
+            <div className="relative mb-6">
+              <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-white mx-auto"></div>
+            </div>
+            <h3 className="text-white text-lg font-semibold mb-2">
+              Loading scene builder...
+            </h3>
+          </div>
+        </div>
+      }
+    >
+      <VideoGenerationComp />
+    </Suspense>
+  );
+}

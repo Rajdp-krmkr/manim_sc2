@@ -107,7 +107,9 @@ const Navbar = () => {
                       <p className="text-sm text-white font-medium">
                         {user?.displayName || "User"}
                       </p>
-                      <p className="text-xs text-gray-400">{user?.email}</p>
+                      <p className="text-xs text-gray-400 truncate">
+                        {user?.email}
+                      </p>
                     </div>
                     <button
                       onClick={() => {

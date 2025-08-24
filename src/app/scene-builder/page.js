@@ -9,12 +9,18 @@ import {
   FiTrash2,
   FiPlay,
   FiArrowLeft,
+  FiArrowRight,
+  FiChevronLeft,
+  FiChevronRight,
   FiChevronDown,
   FiChevronUp,
   FiLoader,
   FiRefreshCw,
   FiCheck,
   FiEye,
+  FiMaximize2,
+  FiMinimize2,
+  FiX,
 } from "react-icons/fi";
 
 const SceneBuilderPage = () => {
@@ -69,6 +75,10 @@ const SceneBuilderPage = () => {
   });
   const [chatID, setChatID] = useState(null);
   const [generationTokens, setGenerationTokens] = useState([]);
+
+  // Carousel state
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [fullscreenVersion, setFullscreenVersion] = useState(null);
 
   // Refs
   const eventSourceRef = useRef(null);
@@ -127,6 +137,27 @@ const SceneBuilderPage = () => {
         return version;
       })
     );
+  };
+
+  const deleteScene = (versionId, sceneId) => {
+    if (window.confirm("Are you sure you want to delete this scene?")) {
+      removeScene(versionId, sceneId);
+    }
+  };
+
+  // Carousel navigation functions
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % scriptVersions.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide(
+      (prev) => (prev - 1 + scriptVersions.length) % scriptVersions.length
+    );
+  };
+
+  const goToSlide = (index) => {
+    setCurrentSlide(index);
   };
 
   // Generate unique chat ID
@@ -524,45 +555,130 @@ const SceneBuilderPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white relative overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-500/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-3/4 left-1/3 w-64 h-64 bg-green-500/5 rounded-full blur-3xl animate-pulse delay-2000"></div>
+      </div>
+
+      <style jsx>{`
+        .custom-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: #6366f1 #1f2937;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+          border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: linear-gradient(180deg, #6366f1 0%, #4f46e5 100%);
+          border-radius: 4px;
+          border: 1px solid #374151;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: linear-gradient(180deg, #7c3aed 0%, #6366f1 100%);
+        }
+        .glass-effect {
+          background: rgba(17, 24, 39, 0.8);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(75, 85, 99, 0.3);
+        }
+        .gradient-border {
+          position: relative;
+          background: linear-gradient(
+            145deg,
+            rgba(17, 24, 39, 0.9),
+            rgba(31, 41, 55, 0.9)
+          );
+          border: 1px solid transparent;
+        }
+        .gradient-border::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          padding: 1px;
+          background: linear-gradient(
+            145deg,
+            rgba(99, 102, 241, 0.5),
+            rgba(168, 85, 247, 0.5),
+            rgba(34, 197, 94, 0.5)
+          );
+          border-radius: inherit;
+          mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          mask-composite: exclude;
+          -webkit-mask-composite: xor;
+        }
+        .animate-gradient {
+          background-size: 400% 400%;
+          animation: gradient 8s ease infinite;
+        }
+        @keyframes gradient {
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
+        .floating {
+          animation: floating 6s ease-in-out infinite;
+        }
+        @keyframes floating {
+          0%,
+          100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-10px);
+          }
+        }
+      `}</style>
       <Navbar />
 
       {/* Header Section */}
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-12 pt-28">
-        <div className="text-center mb-12">
-          <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-4 tracking-tight">
             Scene Builder
           </h1>
-          <p className="text-xl text-gray-400 mb-10 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-base text-gray-400 mb-6 max-w-2xl mx-auto leading-relaxed">
             Create and customize your animation scenes with three different
             script variations. Build compelling mathematical visualizations step
             by step.
           </p>
 
           {/* Topic Input and Generation Controls */}
-          <div className="max-w-4xl mx-auto mb-10">
-            <div className="bg-gray-900/90 backdrop-blur-lg border border-gray-600/50 rounded-2xl p-8 shadow-2xl">
-              <div className="flex flex-col sm:flex-row gap-6 items-center">
+          <div className="max-w-3xl mx-auto mb-6">
+            <div className="bg-gray-900/90 backdrop-blur-lg border border-gray-600/50 rounded-xl p-4 shadow-xl">
+              <div className="flex flex-col sm:flex-row gap-3 items-center">
                 <input
                   type="text"
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                   placeholder="Enter your animation topic..."
-                  className="flex-1 bg-transparent text-white placeholder:text-gray-400 border-none outline-none text-xl font-medium min-h-[48px]"
+                  className="flex-1 bg-transparent text-white placeholder:text-gray-400 border-none outline-none text-base font-medium min-h-[36px]"
                 />
                 <button
                   onClick={startScriptGeneration}
                   disabled={!topic || isGenerating || !user?.uid}
-                  className="bg-white text-black px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3 shadow-lg hover:shadow-xl transform hover:scale-105"
+                  className="bg-white text-black px-5 py-2.5 rounded-lg font-semibold text-sm hover:bg-gray-100 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg hover:shadow-xl"
                 >
                   {isGenerating ? (
                     <>
-                      <FiLoader className="animate-spin text-xl" />
+                      <FiLoader className="animate-spin text-sm" />
                       Generating...
                     </>
                   ) : (
                     <>
-                      <FiRefreshCw className="text-xl" />
+                      <FiRefreshCw className="text-sm" />
                       Generate Scripts
                     </>
                   )}
@@ -572,9 +688,9 @@ const SceneBuilderPage = () => {
           </div>
 
           {/* Connection Status */}
-          <div className="flex justify-center items-center gap-3 mb-8">
+          <div className="flex justify-center items-center gap-2 mb-6">
             <div
-              className={`w-3 h-3 rounded-full shadow-lg ${
+              className={`w-2 h-2 rounded-full shadow-lg ${
                 connectionStatus === "connected"
                   ? "bg-green-400 shadow-green-400/50"
                   : connectionStatus === "connecting"
@@ -582,7 +698,7 @@ const SceneBuilderPage = () => {
                   : "bg-red-400 shadow-red-400/50"
               }`}
             />
-            <span className="text-base text-gray-400 font-medium">
+            <span className="text-xs text-gray-400 font-medium">
               Connection:{" "}
               <span className="text-white font-semibold">
                 {connectionStatus}
@@ -592,17 +708,17 @@ const SceneBuilderPage = () => {
 
           {/* Generation Progress */}
           {isGenerating && generationProgress.total > 0 && (
-            <div className="max-w-lg mx-auto mb-10">
-              <div className="bg-gray-900/90 backdrop-blur-lg border border-gray-600/50 rounded-2xl p-6 shadow-xl">
-                <div className="flex justify-between text-base text-gray-300 mb-4 font-medium">
+            <div className="max-w-md mx-auto mb-6">
+              <div className="bg-gray-900/90 backdrop-blur-lg border border-gray-600/50 rounded-xl p-4 shadow-xl">
+                <div className="flex justify-between text-sm text-gray-300 mb-3 font-medium">
                   <span>Script Generation Progress</span>
                   <span className="text-white font-bold">
                     {generationProgress.completed}/{generationProgress.total}
                   </span>
                 </div>
-                <div className="w-full bg-gray-800 rounded-full h-3 overflow-hidden">
+                <div className="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
                   <div
-                    className="bg-gradient-to-r from-white to-gray-200 h-3 rounded-full transition-all duration-500 ease-out shadow-sm"
+                    className="bg-gradient-to-r from-white to-gray-200 h-2 rounded-full transition-all duration-500 ease-out shadow-sm"
                     style={{
                       width: `${
                         (generationProgress.completed /
@@ -617,113 +733,270 @@ const SceneBuilderPage = () => {
           )}
         </div>
 
-        {/* Three Column Layout */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 lg:grid-cols-2 gap-8 mb-12">
-          {scriptVersions.map((version) => (
-            <div
-              key={version.id}
-              className="bg-gray-900/70 backdrop-blur-xl border border-gray-600/40 rounded-2xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:border-gray-500/60"
+        {/* Carousel Layout */}
+        <div className="relative w-full mb-8">
+          {/* Carousel Navigation */}
+          <div className="flex justify-between items-center mb-6">
+            <button
+              onClick={prevSlide}
+              disabled={isGenerating}
+              className="bg-gray-900/90 hover:bg-gray-800/90 disabled:bg-gray-900/40 disabled:cursor-not-allowed text-white p-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl border border-gray-700/60 hover:border-gray-600/80"
             >
-              {/* Version Header */}
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-                  {version.title}
-                  {version.isComplete && (
-                    <FiCheck className="text-green-400 text-xl" />
-                  )}
-                </h2>
-                <div className="flex items-center gap-2">
-                  {version.isComplete ? (
-                    <span className="text-sm bg-green-500/20 text-green-400 px-4 py-2 rounded-full border border-green-500/40 font-semibold">
-                      Complete
-                    </span>
-                  ) : isGenerating ? (
-                    <span className="text-sm bg-yellow-500/20 text-yellow-400 px-4 py-2 rounded-full border border-yellow-500/40 flex items-center gap-2 font-semibold">
-                      <FiLoader className="animate-spin w-4 h-4" />
-                      Generating
-                    </span>
-                  ) : (
-                    <span className="text-sm bg-gray-500/20 text-gray-400 px-4 py-2 rounded-full border border-gray-500/40 font-semibold">
-                      Waiting
-                    </span>
-                  )}
-                </div>
-              </div>
+              <FiChevronLeft className="text-lg" />
+            </button>
 
-              {/* Received At */}
-              {version.receivedAt && (
-                <p className="text-sm text-gray-400 mb-6 font-medium">
-                  Received:{" "}
-                  <span className="text-gray-300">
-                    {new Date(version.receivedAt).toLocaleTimeString()}
-                  </span>
-                </p>
-              )}
+            <div className="flex items-center gap-2">
+              {scriptVersions.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => goToSlide(index)}
+                  disabled={isGenerating}
+                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    currentSlide === index
+                      ? "bg-white shadow-lg shadow-white/50"
+                      : "bg-gray-600 hover:bg-gray-500"
+                  }`}
+                />
+              ))}
+            </div>
 
-              {/* Scenes List */}
-              <div className="space-y-6">
-                {version.scenes.map((scene) => (
+            <button
+              onClick={nextSlide}
+              disabled={isGenerating}
+              className="bg-gray-900/90 hover:bg-gray-800/90 disabled:bg-gray-900/40 disabled:cursor-not-allowed text-white p-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl border border-gray-700/60 hover:border-gray-600/80"
+            >
+              <FiChevronRight className="text-lg" />
+            </button>
+          </div>
+
+          {/* Carousel Container */}
+          <div className="relative overflow-hidden rounded-3xl">
+            <div className="flex items-stretch">
+              {scriptVersions.map((version, index) => (
+                <div
+                  key={version.id}
+                  className={`flex-shrink-0 transition-all duration-700 ease-out px-4 ${
+                    currentSlide === index
+                      ? "w-3/5" // 60% width for focused slide
+                      : "w-1/5" // 20% width for non-focused slides
+                  }`}
+                  style={{
+                    transform: `translateX(-${currentSlide * 20}%)`,
+                  }}
+                >
                   <div
-                    key={scene.id}
-                    className="bg-gray-800/60 border border-gray-600/50 rounded-xl p-6 hover:bg-gray-800/80 transition-all duration-200"
+                    className={`transition-all duration-500 h-full ${
+                      currentSlide === index
+                        ? "scale-100 opacity-100"
+                        : "scale-90 opacity-60"
+                    }`}
                   >
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-xl font-bold text-white">
-                        Scene {scene.id}
-                      </h3>
-                      <div className="flex items-center gap-3">
-                        {scene.duration && (
-                          <span className="text-xs bg-blue-500/20 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/40 font-bold">
-                            {scene.duration}s
-                          </span>
-                        )}
-                        {scene.sequence && (
-                          <span className="text-xs bg-purple-500/20 text-purple-400 px-3 py-1.5 rounded-lg border border-purple-500/40 font-bold">
-                            Seq: {scene.sequence}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <textarea
-                      value={scene.prompt}
-                      onChange={(e) =>
-                        updateScene(version.id, scene.id, {
-                          prompt: e.target.value,
-                        })
-                      }
-                      placeholder="Enter scene description..."
-                      className="w-full h-32 p-4 bg-gray-700/50 border border-gray-600/50 rounded-xl text-white placeholder:text-gray-400 resize-none focus:outline-none focus:border-white/60 focus:bg-gray-700/70 transition-all duration-200 text-base leading-relaxed"
-                      disabled={isGenerating}
-                    />
-
-                    {scene.originalAnim && (
-                      <div className="mt-4">
-                        <p className="text-sm text-gray-400 mb-3 font-semibold">
-                          Original Animation Code:
-                        </p>
-                        <div className="bg-gray-900/80 border border-gray-600/40 rounded-lg p-4">
-                          <p className="text-sm text-gray-300 font-mono leading-relaxed">
-                            {scene.originalAnim}
-                          </p>
+                    <div className="bg-gray-900/70 backdrop-blur-xl border border-gray-600/40 rounded-xl p-4 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:border-gray-500/60 h-full min-h-[500px]">
+                      {/* Version Header */}
+                      <div className="flex items-center justify-between mb-4">
+                        <h2
+                          className={`font-bold text-white flex items-center gap-2 ${
+                            currentSlide === index
+                              ? "text-xl md:text-2xl"
+                              : "text-base"
+                          }`}
+                        >
+                          {currentSlide === index
+                            ? version.title
+                            : version.title.split(" - ")[0]}
+                          {version.isComplete && (
+                            <FiCheck className="text-green-400 text-lg" />
+                          )}
+                        </h2>
+                        <div className="flex items-center gap-2">
+                          {currentSlide === index && (
+                            <button
+                              onClick={() =>
+                                setFullscreenVersion({
+                                  versionId: version.id,
+                                  version: version,
+                                })
+                              }
+                              className="bg-gray-600/50 hover:bg-gray-600/70 text-gray-300 hover:text-white p-2 rounded-md transition-all duration-200"
+                              title="View script in fullscreen"
+                            >
+                              <FiMaximize2 className="text-sm" />
+                            </button>
+                          )}
+                          {version.isComplete ? (
+                            <span
+                              className={`bg-green-500/20 text-green-400 rounded-full border border-green-500/40 font-semibold ${
+                                currentSlide === index
+                                  ? "text-xs px-3 py-1.5"
+                                  : "text-xs px-2 py-1"
+                              }`}
+                            >
+                              {currentSlide === index ? "Complete" : "✓"}
+                            </span>
+                          ) : isGenerating ? (
+                            <span
+                              className={`bg-yellow-500/20 text-yellow-400 rounded-full border border-yellow-500/40 flex items-center gap-2 font-semibold ${
+                                currentSlide === index
+                                  ? "text-xs px-3 py-1.5"
+                                  : "text-xs px-2 py-1"
+                              }`}
+                            >
+                              <FiLoader className="animate-spin w-3 h-3" />
+                              {currentSlide === index ? "Generating" : "..."}
+                            </span>
+                          ) : (
+                            <span
+                              className={`bg-gray-500/20 text-gray-400 rounded-full border border-gray-500/40 font-semibold ${
+                                currentSlide === index
+                                  ? "text-xs px-3 py-1.5"
+                                  : "text-xs px-2 py-1"
+                              }`}
+                            >
+                              {currentSlide === index ? "Waiting" : "○"}
+                            </span>
+                          )}
                         </div>
                       </div>
-                    )}
-                  </div>
-                ))}
-              </div>
 
-              {/* Add Scene Button */}
-              <button
-                onClick={() => addScene(version.id)}
-                disabled={isGenerating}
-                className="w-full mt-8 bg-white/15 hover:bg-white/25 disabled:bg-gray-800/50 disabled:cursor-not-allowed text-white px-6 py-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 border border-gray-600/50 hover:border-gray-500/70 font-semibold text-lg shadow-lg hover:shadow-xl"
-              >
-                <FiPlus className="text-xl" />
-                Add Scene
-              </button>
+                      {/* Content - Only show details for focused slide */}
+                      {currentSlide === index ? (
+                        <>
+                          {/* Received At */}
+                          {version.receivedAt && (
+                            <p className="text-xs text-gray-400 mb-4 font-medium">
+                              Received:{" "}
+                              <span className="text-gray-300">
+                                {new Date(
+                                  version.receivedAt
+                                ).toLocaleTimeString()}
+                              </span>
+                            </p>
+                          )}
+
+                          {/* Scenes List */}
+                          <div className="space-y-4 max-h-80 overflow-y-auto custom-scrollbar">
+                            {version.scenes.map((scene) => (
+                              <div
+                                key={scene.id}
+                                className="bg-gray-800/60 border border-gray-600/50 rounded-lg p-4 hover:bg-gray-800/80 transition-all duration-200"
+                              >
+                                <div className="flex items-center justify-between mb-4">
+                                  <h3 className="text-lg font-bold text-white">
+                                    Scene {scene.id}
+                                  </h3>
+                                  <div className="flex items-center gap-2">
+                                    {scene.duration && (
+                                      <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded-md border border-blue-500/40 font-semibold">
+                                        {scene.duration}s
+                                      </span>
+                                    )}
+                                    {scene.sequence && (
+                                      <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-1 rounded-md border border-purple-500/40 font-semibold">
+                                        Seq: {scene.sequence}
+                                      </span>
+                                    )}
+                                    <button
+                                      onClick={() =>
+                                        deleteScene(version.id, scene.id)
+                                      }
+                                      disabled={isGenerating}
+                                      className="bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/40 hover:border-red-500/60 p-1.5 rounded-md transition-all duration-200 disabled:opacity-50"
+                                      title="Delete scene"
+                                    >
+                                      <FiX className="text-sm" />
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <textarea
+                                  value={scene.prompt}
+                                  onChange={(e) =>
+                                    updateScene(version.id, scene.id, {
+                                      prompt: e.target.value,
+                                    })
+                                  }
+                                  placeholder="Enter scene description..."
+                                  className="w-full h-24 p-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white placeholder:text-gray-400 resize-none focus:outline-none focus:border-white/60 focus:bg-gray-700/70 transition-all duration-200 text-sm leading-relaxed"
+                                  disabled={isGenerating}
+                                />
+
+                                {scene.originalAnim && (
+                                  <div className="mt-3">
+                                    <p className="text-xs text-gray-400 mb-2 font-semibold">
+                                      Original Animation Code:
+                                    </p>
+                                    <div className="bg-gray-900/80 border border-gray-600/40 rounded-lg p-3">
+                                      <p className="text-xs text-gray-300 font-mono leading-relaxed">
+                                        {scene.originalAnim}
+                                      </p>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Add Scene Button */}
+                          <button
+                            onClick={() => addScene(version.id)}
+                            disabled={isGenerating}
+                            className="w-full mt-4 bg-white/15 hover:bg-white/25 disabled:bg-gray-800/50 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 border border-gray-600/50 hover:border-gray-500/70 font-semibold text-sm shadow-lg hover:shadow-xl"
+                          >
+                            <FiPlus className="text-base" />
+                            Add Scene
+                          </button>
+                        </>
+                      ) : (
+                        /* Preview for non-focused slides */
+                        <div className="flex flex-col justify-center items-center h-full text-center py-8">
+                          <div className="mb-4">
+                            <span className="text-4xl text-gray-500">
+                              {version.isComplete ? "📄" : "⭯"}
+                            </span>
+                          </div>
+                          <p className="text-gray-400 text-sm mb-2">
+                            {version.scenes.length} scene
+                            {version.scenes.length !== 1 ? "s" : ""}
+                          </p>
+                          <button
+                            onClick={() => goToSlide(index)}
+                            className="text-white/80 hover:text-white text-sm font-medium hover:underline transition-colors"
+                          >
+                            Click to edit
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+
+          {/* Slide Indicators with Labels */}
+          <div className="flex justify-center items-center gap-6 mt-8">
+            {scriptVersions.map((version, index) => (
+              <button
+                key={index}
+                onClick={() => goToSlide(index)}
+                disabled={isGenerating}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ${
+                  currentSlide === index
+                    ? "bg-white/20 text-white border border-white/30"
+                    : "bg-gray-800/50 text-gray-400 border border-gray-700/50 hover:bg-gray-700/50 hover:text-gray-300"
+                }`}
+              >
+                <div
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    currentSlide === index ? "bg-white" : "bg-gray-500"
+                  }`}
+                />
+                <span className="text-sm font-medium">
+                  {version.title.split(" - ")[0]}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Footer Actions */}
@@ -899,6 +1172,111 @@ const SceneBuilderPage = () => {
           </div>
         )}
       </div>
+
+      {/* Fullscreen Modal */}
+      {fullscreenVersion && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-gray-900/95 backdrop-blur-xl border border-gray-600/50 rounded-xl w-full max-w-6xl h-[90vh] flex flex-col shadow-2xl">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-600/50">
+              <h3 className="text-xl font-bold text-white">
+                {fullscreenVersion.version.title} - Fullscreen View
+              </h3>
+              <button
+                onClick={() => setFullscreenVersion(null)}
+                className="bg-gray-700/50 hover:bg-gray-700/70 text-gray-300 hover:text-white p-2 rounded-lg transition-all duration-200"
+              >
+                <FiMinimize2 className="text-lg" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="flex-1 p-4 overflow-y-auto">
+              <div className="space-y-6">
+                {fullscreenVersion.version.scenes.map((scene) => (
+                  <div
+                    key={scene.id}
+                    className="bg-gray-800/60 border border-gray-600/50 rounded-lg p-4"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-lg font-bold text-white">
+                        Scene {scene.id}
+                      </h4>
+                      <div className="flex items-center gap-2">
+                        {scene.duration && (
+                          <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded-md border border-blue-500/40 font-semibold">
+                            {scene.duration}s
+                          </span>
+                        )}
+                        {scene.sequence && (
+                          <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-1 rounded-md border border-purple-500/40 font-semibold">
+                            Seq: {scene.sequence}
+                          </span>
+                        )}
+                        <button
+                          onClick={() =>
+                            deleteScene(fullscreenVersion.version.id, scene.id)
+                          }
+                          disabled={isGenerating}
+                          className="bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/40 hover:border-red-500/60 p-1.5 rounded-md transition-all duration-200 disabled:opacity-50"
+                          title="Delete scene"
+                        >
+                          <FiX className="text-sm" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <textarea
+                      value={scene.prompt}
+                      onChange={(e) =>
+                        updateScene(fullscreenVersion.version.id, scene.id, {
+                          prompt: e.target.value,
+                        })
+                      }
+                      placeholder="Enter scene description..."
+                      className="w-full h-32 p-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white placeholder:text-gray-400 resize-none focus:outline-none focus:border-white/60 focus:bg-gray-700/70 transition-all duration-200 text-sm leading-relaxed"
+                      disabled={isGenerating}
+                    />
+
+                    {scene.originalAnim && (
+                      <div className="mt-3">
+                        <p className="text-xs text-gray-400 mb-2 font-semibold">
+                          Original Animation Code:
+                        </p>
+                        <div className="bg-gray-900/80 border border-gray-600/40 rounded-lg p-3">
+                          <p className="text-xs text-gray-300 font-mono leading-relaxed">
+                            {scene.originalAnim}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {/* Add Scene Button in Fullscreen */}
+                <button
+                  onClick={() => addScene(fullscreenVersion.version.id)}
+                  disabled={isGenerating}
+                  className="w-full bg-white/15 hover:bg-white/25 disabled:bg-gray-800/50 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 border border-gray-600/50 hover:border-gray-500/70 font-semibold text-sm shadow-lg hover:shadow-xl"
+                >
+                  <FiPlus className="text-base" />
+                  Add Scene
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-gray-600/50 flex justify-end gap-3">
+              <button
+                onClick={() => setFullscreenVersion(null)}
+                className="bg-gray-700/50 hover:bg-gray-700/70 text-white px-4 py-2 rounded-lg transition-all duration-200"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

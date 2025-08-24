@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useGeneration } from "@/context/GenerationContext";
@@ -11,6 +11,10 @@ import {
   FiArrowLeft,
   FiChevronDown,
   FiChevronUp,
+  FiLoader,
+  FiRefreshCw,
+  FiCheck,
+  FiEye,
 } from "react-icons/fi";
 
 const SceneBuilderPage = () => {
@@ -19,12 +23,379 @@ const SceneBuilderPage = () => {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { generationData, clearGenerationData } = useGeneration();
   const [topic, setTopic] = useState("");
-  const [scenes, setScenes] = useState([
-    { id: 1, prompt: "" },
-    { id: 2, prompt: "" },
+
+  // State for 3 different script versions
+  const [scriptVersions, setScriptVersions] = useState([
+    {
+      id: 1,
+      title: "Version A",
+      scenes: [
+        { id: 1, prompt: "" },
+        { id: 2, prompt: "" },
+      ],
+      isComplete: false,
+      receivedAt: null,
+    },
+    {
+      id: 2,
+      title: "Version B",
+      scenes: [
+        { id: 1, prompt: "" },
+        { id: 2, prompt: "" },
+      ],
+      isComplete: false,
+      receivedAt: null,
+    },
+    {
+      id: 3,
+      title: "Version C",
+      scenes: [
+        { id: 1, prompt: "" },
+        { id: 2, prompt: "" },
+      ],
+      isComplete: false,
+      receivedAt: null,
+    },
   ]);
+
+  // SSE and generation states
   const [isGenerating, setIsGenerating] = useState(false);
-  const [openDropdowns, setOpenDropdowns] = useState({});
+  const [connectionStatus, setConnectionStatus] = useState("disconnected");
+  const [receivedScripts, setReceivedScripts] = useState([]);
+  const [allScriptsComplete, setAllScriptsComplete] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState({
+    completed: 0,
+    total: 0,
+  });
+  const [chatID, setChatID] = useState(null);
+  const [generationTokens, setGenerationTokens] = useState([]);
+
+  // Refs
+  const eventSourceRef = useRef(null);
+  const isComponentMountedRef = useRef(true);
+
+  // Backend configuration
+  const BACKEND_URL =
+    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5001";
+
+  // Utility functions for scriptVersions
+  const updateScene = (versionId, sceneId, updates) => {
+    setScriptVersions((prev) =>
+      prev.map((version) => {
+        if (version.id === versionId) {
+          return {
+            ...version,
+            scenes: version.scenes.map((scene) =>
+              scene.id === sceneId ? { ...scene, ...updates } : scene
+            ),
+          };
+        }
+        return version;
+      })
+    );
+  };
+
+  const addScene = (versionId) => {
+    setScriptVersions((prev) =>
+      prev.map((version) => {
+        if (version.id === versionId) {
+          const newScene = {
+            id: version.scenes.length + 1,
+            prompt: "",
+            duration: 5,
+            sequence: version.scenes.length + 1,
+          };
+          return {
+            ...version,
+            scenes: [...version.scenes, newScene],
+          };
+        }
+        return version;
+      })
+    );
+  };
+
+  const removeScene = (versionId, sceneId) => {
+    setScriptVersions((prev) =>
+      prev.map((version) => {
+        if (version.id === versionId && version.scenes.length > 1) {
+          return {
+            ...version,
+            scenes: version.scenes.filter((scene) => scene.id !== sceneId),
+          };
+        }
+        return version;
+      })
+    );
+  };
+
+  // Generate unique chat ID
+  useEffect(() => {
+    if (user?.uid && !chatID) {
+      const newChatID = `chat_${user.uid}_${Date.now()}`;
+      setChatID(newChatID);
+    }
+  }, [user?.uid, chatID]);
+
+  // Initialize SSE connection when chatID is available
+  useEffect(() => {
+    if (chatID && !eventSourceRef.current) {
+      connectToSSE(chatID);
+    }
+
+    return () => {
+      disconnectSSE();
+    };
+  }, [chatID]);
+
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      isComponentMountedRef.current = false;
+      disconnectSSE();
+    };
+  }, []);
+
+  // Connect to SSE
+  const connectToSSE = (chatID) => {
+    try {
+      const eventSource = new EventSource(`${BACKEND_URL}/events/${chatID}`);
+      eventSourceRef.current = eventSource;
+
+      eventSource.onopen = () => {
+        console.log("SSE Connection opened");
+        setConnectionStatus("connected");
+      };
+
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          handleSSEMessage(data);
+        } catch (error) {
+          console.error("Error parsing SSE message:", error);
+        }
+      };
+
+      eventSource.onerror = (error) => {
+        console.error("SSE Error:", error);
+        setConnectionStatus("error");
+
+        // Attempt to reconnect after a delay
+        setTimeout(() => {
+          if (isComponentMountedRef.current) {
+            disconnectSSE();
+            connectToSSE(chatID);
+          }
+        }, 5000);
+      };
+    } catch (error) {
+      console.error("Error connecting to SSE:", error);
+      setConnectionStatus("error");
+    }
+  };
+
+  // Disconnect SSE
+  const disconnectSSE = () => {
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
+      setConnectionStatus("disconnected");
+    }
+  };
+
+  // Handle SSE messages
+  const handleSSEMessage = (data) => {
+    console.log("Received SSE message:", data);
+
+    switch (data.type) {
+      case "connected":
+        console.log("SSE Connected:", data.message);
+        break;
+
+      case "script_ready":
+        handleScriptReady(data);
+        break;
+
+      case "all_scripts_complete":
+        handleAllScriptsComplete(data);
+        break;
+
+      default:
+        console.log("Unknown SSE message type:", data.type);
+    }
+  };
+
+  // Handle individual script ready
+  const handleScriptReady = (data) => {
+    const { data: scriptData, readyToken, scriptIndex, totalScripts } = data;
+
+    setReceivedScripts((prev) => {
+      const newScripts = [...prev];
+      newScripts[scriptIndex - 1] = {
+        script: scriptData,
+        token: readyToken,
+        index: scriptIndex,
+        receivedAt: new Date().toISOString(),
+      };
+      return newScripts;
+    });
+
+    setGenerationProgress({
+      completed: scriptIndex,
+      total: totalScripts,
+    });
+
+    // Update the corresponding script version
+    if (scriptIndex <= 3) {
+      setScriptVersions((prev) =>
+        prev.map((version) => {
+          if (version.id === scriptIndex) {
+            const scenes = scriptData.scenes
+              ? scriptData.scenes.map((scene, index) => ({
+                  id: index + 1,
+                  prompt: scene.text || scene,
+                  duration: scene.duration_sec,
+                  sequence: scene.seq,
+                  originalAnim: scene.anim,
+                }))
+              : [
+                  { id: 1, prompt: "" },
+                  { id: 2, prompt: "" },
+                ];
+
+            return {
+              ...version,
+              scenes,
+              isComplete: true,
+              receivedAt: new Date().toISOString(),
+              scriptData,
+            };
+          }
+          return version;
+        })
+      );
+    }
+
+    console.log(
+      `Script ${scriptIndex}/${totalScripts} received and applied to Version ${scriptIndex}`
+    );
+  };
+
+  // Handle all scripts complete
+  const handleAllScriptsComplete = (data) => {
+    const { allScripts, allTokens, scripts } = data;
+
+    // Use scripts array if available (new format), otherwise fall back to allScripts
+    const scriptsData = scripts || allScripts || [];
+
+    setAllScriptsComplete(true);
+    setIsGenerating(false);
+
+    console.log("All scripts completed:", { scriptsData, allTokens });
+
+    // Update all script versions with the received scripts data
+    if (scriptsData && Array.isArray(scriptsData)) {
+      setScriptVersions((prev) =>
+        prev.map((version, index) => {
+          if (index < scriptsData.length) {
+            const scriptData = scriptsData[index];
+            const scenes = scriptData.scenes
+              ? scriptData.scenes.map((scene, sceneIndex) => ({
+                  id: sceneIndex + 1,
+                  prompt: scene.text || scene,
+                  duration: scene.duration_sec || 5,
+                  sequence: scene.seq,
+                  originalAnim: scene.anim,
+                }))
+              : [
+                  { id: 1, prompt: "" },
+                  { id: 2, prompt: "" },
+                ];
+
+            return {
+              ...version,
+              scenes,
+              isComplete: true,
+              receivedAt: new Date().toISOString(),
+              scriptData,
+              title: `Version ${String.fromCharCode(65 + index)} - ${
+                scriptData.title || version.title
+              }`,
+            };
+          }
+          return version;
+        })
+      );
+
+      // Update other states
+      setReceivedScripts(scriptsData);
+      setGenerationProgress({
+        completed: scriptsData.length,
+        total: scriptsData.length,
+      });
+
+      console.log(
+        `All ${scriptsData.length} scripts received and applied to versions`
+      );
+    }
+  };
+
+  // Start script generation
+  const startScriptGeneration = async () => {
+    if (!topic || !chatID || !user?.uid) {
+      console.error("Missing required data for script generation");
+      return;
+    }
+
+    setIsGenerating(true);
+    setReceivedScripts([]);
+    setAllScriptsComplete(false);
+    setGenerationProgress({ completed: 0, total: 0 });
+
+    // Reset script versions
+    setScriptVersions((prev) =>
+      prev.map((version) => ({
+        ...version,
+        isComplete: false,
+        receivedAt: null,
+        scenes: [
+          { id: 1, prompt: "" },
+          { id: 2, prompt: "" },
+        ],
+      }))
+    );
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/submit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text: topic,
+          uid: user.uid,
+          chatID: chatID,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        console.log("Script generation started:", result);
+        setGenerationTokens(result.tokens || []);
+        setGenerationProgress((prev) => ({
+          ...prev,
+          total: result.tokens?.length || 3,
+        }));
+      } else {
+        throw new Error(result.message || "Failed to start script generation");
+      }
+    } catch (error) {
+      console.error("Error starting script generation:", error);
+      setIsGenerating(false);
+      alert("Failed to start script generation. Please try again.");
+    }
+  };
 
   useEffect(() => {
     // Check if we have generation data from context
@@ -39,22 +410,58 @@ const SceneBuilderPage = () => {
         "";
       setTopic(topicFromData);
 
-      // If the response includes scene data, populate the scenes
-      if (generationData?.data?.scenes) {
-        const sceneData = generationData.data.scenes;
-        if (Array.isArray(sceneData)) {
-          // Sort scenes by sequence number and format them
-          const sortedScenes = sceneData
-            .sort((a, b) => (a.seq || 0) - (b.seq || 0))
-            .map((scene, index) => ({
-              id: index + 1,
-              prompt: scene.text || "", // Use 'text' field as the input value
-              duration: scene.duration_sec,
-              sequence: scene.seq,
-              originalAnim: scene.anim,
-            }));
-          setScenes(sortedScenes);
-        }
+      // Handle both old format (data.scenes) and new format (scripts array)
+      let scriptsToProcess = [];
+
+      if (generationData?.scripts && Array.isArray(generationData.scripts)) {
+        // New format: scripts array
+        scriptsToProcess = generationData.scripts;
+      } else if (generationData?.data?.scenes) {
+        // Old format: single data.scenes
+        scriptsToProcess = [
+          { scenes: generationData.data.scenes, title: "Generated Script" },
+        ];
+      }
+
+      if (scriptsToProcess.length > 0) {
+        // Populate script versions with the received scripts
+        setScriptVersions((prev) =>
+          prev.map((version, versionIndex) => {
+            if (versionIndex < scriptsToProcess.length) {
+              const scriptData = scriptsToProcess[versionIndex];
+              const scenes = scriptData.scenes
+                ? scriptData.scenes
+                    .sort((a, b) => (a.seq || 0) - (b.seq || 0))
+                    .map((scene, index) => ({
+                      id: index + 1,
+                      prompt: scene.text || "", // Use 'text' field as the input value
+                      duration: scene.duration_sec || 5,
+                      sequence: scene.seq,
+                      originalAnim: scene.anim,
+                    }))
+                : [
+                    { id: 1, prompt: "" },
+                    { id: 2, prompt: "" },
+                  ];
+
+              return {
+                ...version,
+                scenes,
+                isComplete: true,
+                receivedAt: new Date().toISOString(),
+                title: `Version ${String.fromCharCode(65 + versionIndex)} - ${
+                  scriptData.title || version.title
+                }`,
+                scriptData,
+              };
+            }
+            return version;
+          })
+        );
+
+        console.log(
+          `Populated ${scriptsToProcess.length} script versions with scenes`
+        );
       }
     } else {
       // Fallback to URL parameters if no generation data
@@ -100,100 +507,7 @@ const SceneBuilderPage = () => {
     // Small delay to ensure DOM is updated
     const timer = setTimeout(adjustTextareaHeights, 100);
     return () => clearTimeout(timer);
-  }, [scenes]);
-
-  const addScene = () => {
-    if (scenes.length < 5) {
-      // Maximum 5 scenes allowed
-      const newScene = {
-        id: scenes.length + 1,
-        prompt: "",
-      };
-      setScenes([...scenes, newScene]);
-    }
-  };
-
-  const removeScene = (sceneId) => {
-    if (scenes.length > 2) {
-      // Keep minimum 2 scenes
-      setScenes(scenes.filter((scene) => scene.id !== sceneId));
-    }
-  };
-
-  const updateScenePrompt = (sceneId, prompt) => {
-    setScenes(
-      scenes.map((scene) =>
-        scene.id === sceneId ? { ...scene, prompt } : scene
-      )
-    );
-  };
-
-  const updateSceneAnim = (sceneId, anim) => {
-    setScenes(
-      scenes.map((scene) =>
-        scene.id === sceneId ? { ...scene, originalAnim: anim } : scene
-      )
-    );
-  };
-
-  const toggleDropdown = (sceneId) => {
-    setOpenDropdowns((prev) => ({
-      ...prev,
-      [sceneId]: !prev[sceneId],
-    }));
-  };
-
-  const handleGenerate = async () => {
-    // Validate that all scenes have prompts
-    const emptyScenes = scenes.filter((scene) => !scene.prompt.trim());
-    if (emptyScenes.length > 0) {
-      alert("Please fill in all scene prompts before generating");
-      return;
-    }
-
-    setIsGenerating(true);
-
-    try {
-      // Create the output data structure
-      const outputData = {
-        success: true,
-        message: "Request processed successfully",
-        data: {
-          title: topic || "Animation Title",
-          scenes: scenes.map((scene) => ({
-            seq: scene.sequence || scene.id,
-            text: scene.prompt,
-            anim: scene.originalAnim || "",
-            duration_sec: scene.duration || 10,
-          })),
-        },
-        requestInfo: {
-          text: topic,
-          uid: user?.uid,
-          timestamp: new Date().toISOString(),
-        },
-        originalTopic: topic,
-        text: topic,
-      };
-
-      // Console log the data
-      console.log("Generated animation data:", outputData);
-
-      // Here you would typically send the data to your backend
-      console.log("Sending data to backend...");
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Redirect to video selection page
-      router.push("/video-selection");
-    } catch (error) {
-      console.error("Error generating animation:", error);
-      alert("Failed to generate animation. Please try again.");
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+  }, [scriptVersions]);
 
   // Loading state
   if (isLoading) {
@@ -210,199 +524,315 @@ const SceneBuilderPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       <Navbar />
 
-      {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
-        {/* Header */}
-        <div className="mb-8">
-          <button
-            onClick={() => router.push("/")}
-            className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors mb-6"
-          >
-            <FiArrowLeft className="text-lg" />
-            <span>Back to Home</span>
-          </button>
-
+      {/* Header Section */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-4">Scene Builder</h1>
-          <p className="text-gray-400 mb-6">
-            Break down your animation into multiple scenes for better
-            storytelling
+          <p className="text-xl text-gray-300 mb-6">
+            Create and customize your animation scenes
           </p>
 
-          {/* Topic Display */}
-          <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-700 rounded-xl p-6 mb-8">
-            <h2 className="text-xl font-semibold text-white mb-2">Topic:</h2>
-            <p className="text-gray-300 text-lg">
-              {topic || "No topic specified"}
-            </p>
-          </div>
-        </div>
-
-        {/* Scenes Section */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-2xl font-semibold text-white">
-              Animation Scenes
-            </h3>
-            {scenes.length < 5 ? (
+          {/* Topic Input and Generation Controls */}
+          <div className="max-w-2xl mx-auto mb-6">
+            <div className="flex gap-4 items-center">
+              <input
+                type="text"
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                placeholder="Enter your animation topic..."
+                className="flex-1 px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
               <button
-                onClick={addScene}
-                className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                onClick={startScriptGeneration}
+                disabled={!topic || isGenerating || !user?.uid}
+                className="px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg flex items-center gap-2 transition-colors"
               >
-                <FiPlus className="text-lg" />
-                <span>Add Scene</span>
+                {isGenerating ? (
+                  <>
+                    <FiLoader className="animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <FiRefreshCw />
+                    Generate Scripts
+                  </>
+                )}
               </button>
-            ) : (
-              <div className="text-gray-500 text-sm px-4 py-2">
-                Maximum 5 scenes reached
-              </div>
-            )}
+            </div>
           </div>
 
-          {/* Scene Inputs */}
-          <div className="space-y-6">
-            {scenes.map((scene, index) => (
-              <div
-                key={scene.id}
-                className="bg-gray-900/60 backdrop-blur-sm border border-gray-700 rounded-xl p-6"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-lg font-medium text-white">
-                    Scene {index + 1}
-                  </h4>
-                  {scenes.length > 2 && (
-                    <button
-                      onClick={() => removeScene(scene.id)}
-                      className="text-red-400 hover:text-red-300 transition-colors"
-                    >
-                      <FiTrash2 className="text-lg" />
-                    </button>
-                  )}
-                </div>
+          {/* Connection Status */}
+          <div className="flex justify-center items-center gap-2 mb-4">
+            <div
+              className={`w-3 h-3 rounded-full ${
+                connectionStatus === "connected"
+                  ? "bg-green-500"
+                  : connectionStatus === "connecting"
+                  ? "bg-yellow-500"
+                  : "bg-red-500"
+              }`}
+            />
+            <span className="text-sm text-gray-300">
+              Connection: {connectionStatus}
+            </span>
+          </div>
 
-                <textarea
-                  value={scene.prompt}
-                  onChange={(e) => updateScenePrompt(scene.id, e.target.value)}
-                  placeholder={`Describe what happens in scene ${index + 1}...`}
-                  className="w-full bg-gray-800/50 text-white placeholder:text-gray-500 border border-gray-600 rounded-lg p-4 min-h-[96px] max-h-[300px] resize-y overflow-y-auto focus:outline-none focus:border-white/50 transition-colors"
-                  style={{ height: "auto" }}
-                  data-scene-textarea
-                  onInput={(e) => {
-                    e.target.style.height = "auto";
-                    e.target.style.height =
-                      Math.min(e.target.scrollHeight, 300) + "px";
+          {/* Generation Progress */}
+          {isGenerating && generationProgress.total > 0 && (
+            <div className="max-w-md mx-auto mb-6">
+              <div className="flex justify-between text-sm text-gray-300 mb-2">
+                <span>Script Generation Progress</span>
+                <span>
+                  {generationProgress.completed}/{generationProgress.total}
+                </span>
+              </div>
+              <div className="w-full bg-gray-700 rounded-full h-2">
+                <div
+                  className="bg-purple-600 h-2 rounded-full transition-all duration-300"
+                  style={{
+                    width: `${
+                      (generationProgress.completed /
+                        generationProgress.total) *
+                      100
+                    }%`,
                   }}
                 />
-
-                {/* Advanced Settings Dropdown */}
-                <div className="mt-4">
-                  <button
-                    onClick={() => toggleDropdown(scene.id)}
-                    className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors text-sm"
-                  >
-                    <span>Advanced Settings</span>
-                    {openDropdowns[scene.id] ? (
-                      <FiChevronUp className="text-sm" />
-                    ) : (
-                      <FiChevronDown className="text-sm" />
-                    )}
-                  </button>
-
-                  {openDropdowns[scene.id] && (
-                    <div className="mt-3 p-4 bg-gray-800/30 border border-gray-600 rounded-lg">
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Animation Code
-                      </label>
-                      <textarea
-                        value={scene.originalAnim || ""}
-                        onChange={(e) =>
-                          updateSceneAnim(scene.id, e.target.value)
-                        }
-                        placeholder="Enter animation code..."
-                        className="w-full bg-gray-700/50 text-white placeholder:text-gray-500 border border-gray-600 rounded-lg p-3 text-sm min-h-[60px] max-h-[200px] resize-y overflow-y-auto focus:outline-none focus:border-white/50 transition-colors"
-                        style={{ height: "auto" }}
-                        data-anim-textarea
-                        onInput={(e) => {
-                          e.target.style.height = "auto";
-                          e.target.style.height =
-                            Math.min(e.target.scrollHeight, 200) + "px";
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
               </div>
-            ))}
-          </div>
-
-          {/* Add Scene Button at Bottom */}
-          {scenes.length < 5 && (
-            <div className="flex justify-center mt-6">
-              <button
-                onClick={addScene}
-                className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-lg transition-colors flex items-center space-x-2 border border-gray-600 hover:border-gray-500"
-              >
-                <FiPlus className="text-lg" />
-                <span>Add Another Scene</span>
-              </button>
             </div>
           )}
         </div>
 
-        {/* Generate Button */}
-        <div className="flex justify-center">
-          <button
-            onClick={handleGenerate}
-            disabled={isGenerating}
-            className="bg-white text-black px-8 py-4 rounded-xl font-semibold hover:bg-gray-200 transition-colors flex items-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]"
-          >
-            {isGenerating ? (
-              <>
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
-                <span>Generating Animation...</span>
-              </>
-            ) : (
-              <>
-                <FiPlay className="text-xl" />
-                <span>Generate Animation</span>
-              </>
-            )}
-          </button>
+        {/* Three Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {scriptVersions.map((version) => (
+            <div
+              key={version.id}
+              className="bg-gray-800 rounded-lg p-6 border border-gray-700"
+            >
+              {/* Version Header */}
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                  {version.title}
+                  {version.isComplete && <FiCheck className="text-green-500" />}
+                </h2>
+                <div className="flex items-center gap-2">
+                  {version.isComplete ? (
+                    <span className="text-xs bg-green-600 text-white px-2 py-1 rounded-full">
+                      Complete
+                    </span>
+                  ) : isGenerating ? (
+                    <span className="text-xs bg-yellow-600 text-white px-2 py-1 rounded-full flex items-center gap-1">
+                      <FiLoader className="animate-spin w-3 h-3" />
+                      Generating
+                    </span>
+                  ) : (
+                    <span className="text-xs bg-gray-600 text-white px-2 py-1 rounded-full">
+                      Waiting
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Received At */}
+              {version.receivedAt && (
+                <p className="text-xs text-gray-400 mb-4">
+                  Received: {new Date(version.receivedAt).toLocaleTimeString()}
+                </p>
+              )}
+
+              {/* Scenes List */}
+              <div className="space-y-4">
+                {version.scenes.map((scene) => (
+                  <div key={scene.id} className="bg-gray-700 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-lg font-semibold text-white">
+                        Scene {scene.id}
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        {scene.duration && (
+                          <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded">
+                            {scene.duration}s
+                          </span>
+                        )}
+                        {scene.sequence && (
+                          <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">
+                            Seq: {scene.sequence}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <textarea
+                      value={scene.prompt}
+                      onChange={(e) =>
+                        updateScene(version.id, scene.id, {
+                          prompt: e.target.value,
+                        })
+                      }
+                      placeholder="Enter scene description..."
+                      className="w-full h-24 p-3 bg-gray-600 border border-gray-500 rounded-lg text-white placeholder-gray-400 resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      disabled={isGenerating}
+                    />
+
+                    {scene.originalAnim && (
+                      <div className="mt-2">
+                        <p className="text-xs text-gray-400">
+                          Original Animation:
+                        </p>
+                        <p className="text-sm text-gray-300 bg-gray-600 p-2 rounded mt-1">
+                          {scene.originalAnim}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Add Scene Button */}
+              <button
+                onClick={() => addScene(version.id)}
+                disabled={isGenerating}
+                className="w-full mt-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors"
+              >
+                <FiPlus />
+                Add Scene
+              </button>
+            </div>
+          ))}
         </div>
 
-        {/* Loading Overlay */}
-        {isGenerating && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center">
-            <div className="text-center">
-              <div className="relative mb-6">
-                <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-white mx-auto"></div>
-                <div
-                  className="absolute inset-2 animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-400"
-                  style={{
-                    animationDirection: "reverse",
-                    animationDuration: "1.5s",
-                  }}
-                ></div>
-              </div>
-              <h3 className="text-white text-lg font-semibold mb-2">
-                Creating Your Animation...
-              </h3>
-              <p className="text-gray-300 text-sm">
-                This may take a few moments
+        {/* Footer Actions */}
+        <div className="text-center mt-8">
+          <div className="flex flex-wrap justify-center gap-4">
+            <button
+              onClick={() => {
+                setScriptVersions((prev) =>
+                  prev.map((version) => ({
+                    ...version,
+                    scenes: [
+                      { id: 1, prompt: "" },
+                      { id: 2, prompt: "" },
+                    ],
+                    isComplete: false,
+                    receivedAt: null,
+                  }))
+                );
+                setReceivedScripts([]);
+                setAllScriptsComplete(false);
+              }}
+              disabled={isGenerating}
+              className="px-6 py-3 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-semibold rounded-lg flex items-center gap-2 transition-colors"
+            >
+              <FiTrash2 />
+              Clear All
+            </button>
+
+            <button
+              onClick={() => {
+                const allScenes = scriptVersions.flatMap((version) =>
+                  version.scenes.filter((scene) => scene.prompt.trim())
+                );
+                console.log("All scenes:", allScenes);
+                alert(`Total scenes across all versions: ${allScenes.length}`);
+              }}
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg flex items-center gap-2 transition-colors"
+            >
+              <FiEye />
+              Preview All
+            </button>
+
+            {/* Test Button for Simulating API Response */}
+            <button
+              onClick={() => {
+                const mockApiResponse = {
+                  success: true,
+                  message: "All scripts generated successfully",
+                  scripts: [
+                    {
+                      scenes: [
+                        {
+                          anim: "A square wave is shown on the screen.  The waveform is simple, showing a clear on/off pattern.",
+                          seq: 1,
+                          text: "Let's start with a simple square wave. Notice its sharp transitions between high and low states.",
+                        },
+                        {
+                          anim: "The square wave is gradually decomposed into multiple sine waves of different frequencies and amplitudes.  The sine waves are shown overlaid, with their sum approaching the square wave.",
+                          seq: 2,
+                          text: "Now, we will visualize the Fourier Transform decomposing this square wave.  The Fourier transform reveals that a square wave is actually composed of many sine waves.",
+                        },
+                        {
+                          anim: "Individual sine waves with specific frequencies and amplitudes are highlighted. The first sine wave (fundamental frequency) is the most prominent. Subsequent sine waves have odd multiples of the fundamental frequency, with decreasing amplitudes.",
+                          seq: 3,
+                          text: "Notice the fundamental frequency, the primary component. Then, observe the higher-order harmonics, odd multiples of the fundamental, contributing to the square wave's shape.",
+                        },
+                      ],
+                      title:
+                        "Visualizing Fourier Transform: Decomposing a Square Wave",
+                    },
+                    {
+                      scenes: [
+                        {
+                          anim: "A square wave is shown on the screen. Its sharp edges and flat top are highlighted.",
+                          seq: 1,
+                          text: "Let's begin by looking at a square wave. Notice its distinct characteristics: flat tops and sharp transitions.",
+                        },
+                        {
+                          anim: "The square wave is decomposed into its constituent sine waves. The fundamental frequency sine wave is shown first, followed by the addition of higher-order odd harmonics (3rd, 5th, 7th, etc.).  Each added harmonic refines the approximation of the square wave.",
+                          seq: 2,
+                          text: "The magic of Fourier Transform is its ability to decompose complex waveforms into simpler sine waves. We will visualize this process by adding sine waves of different frequencies and amplitudes.",
+                        },
+                      ],
+                      title: "Alternative Fourier Transform Visualization",
+                    },
+                    {
+                      scenes: [
+                        {
+                          anim: "A square wave is shown on the screen.  Its sharp edges and flat top and bottom are highlighted.",
+                          seq: 1,
+                          text: "Let's begin by looking at a square wave. Notice its distinct characteristics: the abrupt transitions and constant amplitude levels.",
+                        },
+                        {
+                          anim: "The square wave is then decomposed into its constituent sine waves. The fundamental frequency sine wave is shown first, then the third harmonic, the fifth harmonic and so on, with each successive harmonic having a smaller amplitude.",
+                          seq: 2,
+                          text: "Now, we'll visualize the Fourier Transform at work.  A square wave, seemingly simple, is actually composed of an infinite series of sine waves. We'll show you how it works with several of the most important components.",
+                        },
+                      ],
+                      title: "Third Fourier Transform Perspective",
+                    },
+                  ],
+                  tokens: ["76a21c63", "fda904ea", "790cb145"],
+                  chatID: "test_chat_123",
+                };
+
+                console.log("Testing with mock API response:", mockApiResponse);
+                handleAllScriptsComplete(mockApiResponse);
+              }}
+              className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg flex items-center gap-2 transition-colors"
+            >
+              <FiPlay />
+              Test API Response
+            </button>
+          </div>
+        </div>
+
+        {/* Debug Info */}
+        {process.env.NODE_ENV === "development" && (
+          <div className="mt-8 p-4 bg-gray-800 rounded-lg">
+            <h3 className="text-white font-semibold mb-2">Debug Info</h3>
+            <div className="text-sm text-gray-300 space-y-1">
+              <p>Chat ID: {chatID}</p>
+              <p>Connection Status: {connectionStatus}</p>
+              <p>Is Generating: {isGenerating.toString()}</p>
+              <p>Received Scripts: {receivedScripts.length}</p>
+              <p>All Scripts Complete: {allScriptsComplete.toString()}</p>
+              <p>
+                Generation Progress: {generationProgress.completed}/
+                {generationProgress.total}
               </p>
-              <div className="mt-4 flex justify-center space-x-1">
-                <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
-                <div
-                  className="w-2 h-2 bg-white rounded-full animate-bounce"
-                  style={{ animationDelay: "0.1s" }}
-                ></div>
-                <div
-                  className="w-2 h-2 bg-white rounded-full animate-bounce"
-                  style={{ animationDelay: "0.2s" }}
-                ></div>
-              </div>
             </div>
           </div>
         )}

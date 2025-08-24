@@ -524,113 +524,126 @@ const SceneBuilderPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-black text-white">
       <Navbar />
 
       {/* Header Section */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4">Scene Builder</h1>
-          <p className="text-xl text-gray-300 mb-6">
-            Create and customize your animation scenes
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-12 pt-28">
+        <div className="text-center mb-12">
+          <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight">
+            Scene Builder
+          </h1>
+          <p className="text-xl text-gray-400 mb-10 max-w-3xl mx-auto leading-relaxed">
+            Create and customize your animation scenes with three different
+            script variations. Build compelling mathematical visualizations step
+            by step.
           </p>
 
           {/* Topic Input and Generation Controls */}
-          <div className="max-w-2xl mx-auto mb-6">
-            <div className="flex gap-4 items-center">
-              <input
-                type="text"
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                placeholder="Enter your animation topic..."
-                className="flex-1 px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
-              <button
-                onClick={startScriptGeneration}
-                disabled={!topic || isGenerating || !user?.uid}
-                className="px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg flex items-center gap-2 transition-colors"
-              >
-                {isGenerating ? (
-                  <>
-                    <FiLoader className="animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <FiRefreshCw />
-                    Generate Scripts
-                  </>
-                )}
-              </button>
+          <div className="max-w-4xl mx-auto mb-10">
+            <div className="bg-gray-900/90 backdrop-blur-lg border border-gray-600/50 rounded-2xl p-8 shadow-2xl">
+              <div className="flex flex-col sm:flex-row gap-6 items-center">
+                <input
+                  type="text"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  placeholder="Enter your animation topic..."
+                  className="flex-1 bg-transparent text-white placeholder:text-gray-400 border-none outline-none text-xl font-medium min-h-[48px]"
+                />
+                <button
+                  onClick={startScriptGeneration}
+                  disabled={!topic || isGenerating || !user?.uid}
+                  className="bg-white text-black px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3 shadow-lg hover:shadow-xl transform hover:scale-105"
+                >
+                  {isGenerating ? (
+                    <>
+                      <FiLoader className="animate-spin text-xl" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <FiRefreshCw className="text-xl" />
+                      Generate Scripts
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
 
           {/* Connection Status */}
-          <div className="flex justify-center items-center gap-2 mb-4">
+          <div className="flex justify-center items-center gap-3 mb-8">
             <div
-              className={`w-3 h-3 rounded-full ${
+              className={`w-3 h-3 rounded-full shadow-lg ${
                 connectionStatus === "connected"
-                  ? "bg-green-500"
+                  ? "bg-green-400 shadow-green-400/50"
                   : connectionStatus === "connecting"
-                  ? "bg-yellow-500"
-                  : "bg-red-500"
+                  ? "bg-yellow-400 shadow-yellow-400/50 animate-pulse"
+                  : "bg-red-400 shadow-red-400/50"
               }`}
             />
-            <span className="text-sm text-gray-300">
-              Connection: {connectionStatus}
+            <span className="text-base text-gray-400 font-medium">
+              Connection:{" "}
+              <span className="text-white font-semibold">
+                {connectionStatus}
+              </span>
             </span>
           </div>
 
           {/* Generation Progress */}
           {isGenerating && generationProgress.total > 0 && (
-            <div className="max-w-md mx-auto mb-6">
-              <div className="flex justify-between text-sm text-gray-300 mb-2">
-                <span>Script Generation Progress</span>
-                <span>
-                  {generationProgress.completed}/{generationProgress.total}
-                </span>
-              </div>
-              <div className="w-full bg-gray-700 rounded-full h-2">
-                <div
-                  className="bg-purple-600 h-2 rounded-full transition-all duration-300"
-                  style={{
-                    width: `${
-                      (generationProgress.completed /
-                        generationProgress.total) *
-                      100
-                    }%`,
-                  }}
-                />
+            <div className="max-w-lg mx-auto mb-10">
+              <div className="bg-gray-900/90 backdrop-blur-lg border border-gray-600/50 rounded-2xl p-6 shadow-xl">
+                <div className="flex justify-between text-base text-gray-300 mb-4 font-medium">
+                  <span>Script Generation Progress</span>
+                  <span className="text-white font-bold">
+                    {generationProgress.completed}/{generationProgress.total}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-800 rounded-full h-3 overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-white to-gray-200 h-3 rounded-full transition-all duration-500 ease-out shadow-sm"
+                    style={{
+                      width: `${
+                        (generationProgress.completed /
+                          generationProgress.total) *
+                        100
+                      }%`,
+                    }}
+                  />
+                </div>
               </div>
             </div>
           )}
         </div>
 
         {/* Three Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-3 lg:grid-cols-2 gap-8 mb-12">
           {scriptVersions.map((version) => (
             <div
               key={version.id}
-              className="bg-gray-800 rounded-lg p-6 border border-gray-700"
+              className="bg-gray-900/70 backdrop-blur-xl border border-gray-600/40 rounded-2xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:border-gray-500/60"
             >
               {/* Version Header */}
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-bold text-white flex items-center gap-3">
                   {version.title}
-                  {version.isComplete && <FiCheck className="text-green-500" />}
+                  {version.isComplete && (
+                    <FiCheck className="text-green-400 text-xl" />
+                  )}
                 </h2>
                 <div className="flex items-center gap-2">
                   {version.isComplete ? (
-                    <span className="text-xs bg-green-600 text-white px-2 py-1 rounded-full">
+                    <span className="text-sm bg-green-500/20 text-green-400 px-4 py-2 rounded-full border border-green-500/40 font-semibold">
                       Complete
                     </span>
                   ) : isGenerating ? (
-                    <span className="text-xs bg-yellow-600 text-white px-2 py-1 rounded-full flex items-center gap-1">
-                      <FiLoader className="animate-spin w-3 h-3" />
+                    <span className="text-sm bg-yellow-500/20 text-yellow-400 px-4 py-2 rounded-full border border-yellow-500/40 flex items-center gap-2 font-semibold">
+                      <FiLoader className="animate-spin w-4 h-4" />
                       Generating
                     </span>
                   ) : (
-                    <span className="text-xs bg-gray-600 text-white px-2 py-1 rounded-full">
+                    <span className="text-sm bg-gray-500/20 text-gray-400 px-4 py-2 rounded-full border border-gray-500/40 font-semibold">
                       Waiting
                     </span>
                   )}
@@ -639,27 +652,33 @@ const SceneBuilderPage = () => {
 
               {/* Received At */}
               {version.receivedAt && (
-                <p className="text-xs text-gray-400 mb-4">
-                  Received: {new Date(version.receivedAt).toLocaleTimeString()}
+                <p className="text-sm text-gray-400 mb-6 font-medium">
+                  Received:{" "}
+                  <span className="text-gray-300">
+                    {new Date(version.receivedAt).toLocaleTimeString()}
+                  </span>
                 </p>
               )}
 
               {/* Scenes List */}
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {version.scenes.map((scene) => (
-                  <div key={scene.id} className="bg-gray-700 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-lg font-semibold text-white">
+                  <div
+                    key={scene.id}
+                    className="bg-gray-800/60 border border-gray-600/50 rounded-xl p-6 hover:bg-gray-800/80 transition-all duration-200"
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-xl font-bold text-white">
                         Scene {scene.id}
                       </h3>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-3">
                         {scene.duration && (
-                          <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded">
+                          <span className="text-xs bg-blue-500/20 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/40 font-bold">
                             {scene.duration}s
                           </span>
                         )}
                         {scene.sequence && (
-                          <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded">
+                          <span className="text-xs bg-purple-500/20 text-purple-400 px-3 py-1.5 rounded-lg border border-purple-500/40 font-bold">
                             Seq: {scene.sequence}
                           </span>
                         )}
@@ -674,18 +693,20 @@ const SceneBuilderPage = () => {
                         })
                       }
                       placeholder="Enter scene description..."
-                      className="w-full h-24 p-3 bg-gray-600 border border-gray-500 rounded-lg text-white placeholder-gray-400 resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full h-32 p-4 bg-gray-700/50 border border-gray-600/50 rounded-xl text-white placeholder:text-gray-400 resize-none focus:outline-none focus:border-white/60 focus:bg-gray-700/70 transition-all duration-200 text-base leading-relaxed"
                       disabled={isGenerating}
                     />
 
                     {scene.originalAnim && (
-                      <div className="mt-2">
-                        <p className="text-xs text-gray-400">
-                          Original Animation:
+                      <div className="mt-4">
+                        <p className="text-sm text-gray-400 mb-3 font-semibold">
+                          Original Animation Code:
                         </p>
-                        <p className="text-sm text-gray-300 bg-gray-600 p-2 rounded mt-1">
-                          {scene.originalAnim}
-                        </p>
+                        <div className="bg-gray-900/80 border border-gray-600/40 rounded-lg p-4">
+                          <p className="text-sm text-gray-300 font-mono leading-relaxed">
+                            {scene.originalAnim}
+                          </p>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -696,9 +717,9 @@ const SceneBuilderPage = () => {
               <button
                 onClick={() => addScene(version.id)}
                 disabled={isGenerating}
-                className="w-full mt-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors"
+                className="w-full mt-8 bg-white/15 hover:bg-white/25 disabled:bg-gray-800/50 disabled:cursor-not-allowed text-white px-6 py-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 border border-gray-600/50 hover:border-gray-500/70 font-semibold text-lg shadow-lg hover:shadow-xl"
               >
-                <FiPlus />
+                <FiPlus className="text-xl" />
                 Add Scene
               </button>
             </div>
@@ -706,8 +727,8 @@ const SceneBuilderPage = () => {
         </div>
 
         {/* Footer Actions */}
-        <div className="text-center mt-8">
-          <div className="flex flex-wrap justify-center gap-4">
+        <div className="text-center">
+          <div className="flex flex-wrap justify-center gap-6 mb-12">
             <button
               onClick={() => {
                 setScriptVersions((prev) =>
@@ -725,9 +746,9 @@ const SceneBuilderPage = () => {
                 setAllScriptsComplete(false);
               }}
               disabled={isGenerating}
-              className="px-6 py-3 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-semibold rounded-lg flex items-center gap-2 transition-colors"
+              className="bg-gray-900/90 hover:bg-gray-800/90 disabled:bg-gray-900/40 disabled:cursor-not-allowed text-gray-300 hover:text-white px-8 py-4 rounded-xl transition-all duration-200 flex items-center gap-3 border border-gray-700/60 hover:border-gray-600/80 font-semibold text-lg shadow-lg hover:shadow-xl"
             >
-              <FiTrash2 />
+              <FiTrash2 className="text-xl" />
               Clear All
             </button>
 
@@ -739,9 +760,9 @@ const SceneBuilderPage = () => {
                 console.log("All scenes:", allScenes);
                 alert(`Total scenes across all versions: ${allScenes.length}`);
               }}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg flex items-center gap-2 transition-colors"
+              className="bg-gray-900/90 hover:bg-gray-800/90 text-gray-300 hover:text-white px-8 py-4 rounded-xl transition-all duration-200 flex items-center gap-3 border border-gray-700/60 hover:border-gray-600/80 font-semibold text-lg shadow-lg hover:shadow-xl"
             >
-              <FiEye />
+              <FiEye className="text-xl" />
               Preview All
             </button>
 
@@ -811,9 +832,9 @@ const SceneBuilderPage = () => {
                 console.log("Testing with mock API response:", mockApiResponse);
                 handleAllScriptsComplete(mockApiResponse);
               }}
-              className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg flex items-center gap-2 transition-colors"
+              className="bg-white text-black px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all duration-200 flex items-center gap-3 shadow-lg hover:shadow-xl transform hover:scale-105"
             >
-              <FiPlay />
+              <FiPlay className="text-xl" />
               Test API Response
             </button>
           </div>
@@ -821,18 +842,59 @@ const SceneBuilderPage = () => {
 
         {/* Debug Info */}
         {process.env.NODE_ENV === "development" && (
-          <div className="mt-8 p-4 bg-gray-800 rounded-lg">
-            <h3 className="text-white font-semibold mb-2">Debug Info</h3>
-            <div className="text-sm text-gray-300 space-y-1">
-              <p>Chat ID: {chatID}</p>
-              <p>Connection Status: {connectionStatus}</p>
-              <p>Is Generating: {isGenerating.toString()}</p>
-              <p>Received Scripts: {receivedScripts.length}</p>
-              <p>All Scripts Complete: {allScriptsComplete.toString()}</p>
-              <p>
-                Generation Progress: {generationProgress.completed}/
-                {generationProgress.total}
-              </p>
+          <div className="mt-12 bg-gray-900/80 backdrop-blur-xl border border-gray-600/50 rounded-2xl p-6 max-w-4xl mx-auto shadow-xl">
+            <h3 className="text-xl font-bold text-white mb-6">
+              Debug Information
+            </h3>
+            <div className="text-base text-gray-300 space-y-3 font-mono grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <p className="flex justify-between">
+                  <span className="text-gray-400">Chat ID:</span>
+                  <span className="text-white font-semibold">
+                    {chatID || "Not set"}
+                  </span>
+                </p>
+                <p className="flex justify-between">
+                  <span className="text-gray-400">Connection:</span>
+                  <span
+                    className={`font-semibold ${
+                      connectionStatus === "connected"
+                        ? "text-green-400"
+                        : connectionStatus === "connecting"
+                        ? "text-yellow-400"
+                        : "text-red-400"
+                    }`}
+                  >
+                    {connectionStatus}
+                  </span>
+                </p>
+                <p className="flex justify-between">
+                  <span className="text-gray-400">Is Generating:</span>
+                  <span className="text-white font-semibold">
+                    {isGenerating.toString()}
+                  </span>
+                </p>
+              </div>
+              <div className="space-y-3">
+                <p className="flex justify-between">
+                  <span className="text-gray-400">Received Scripts:</span>
+                  <span className="text-white font-semibold">
+                    {receivedScripts.length}
+                  </span>
+                </p>
+                <p className="flex justify-between">
+                  <span className="text-gray-400">All Complete:</span>
+                  <span className="text-white font-semibold">
+                    {allScriptsComplete.toString()}
+                  </span>
+                </p>
+                <p className="flex justify-between">
+                  <span className="text-gray-400">Progress:</span>
+                  <span className="text-white font-semibold">
+                    {generationProgress.completed}/{generationProgress.total}
+                  </span>
+                </p>
+              </div>
             </div>
           </div>
         )}

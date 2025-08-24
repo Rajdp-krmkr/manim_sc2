@@ -39,7 +39,7 @@ const VideoSelectionPage = () => {
 
   // Backend configuration
   const BACKEND_URL =
-    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
+    process.env.NEXT_PUBLIC_BACKEND_URL || "http://139.84.154.247:5001";
 
   // Generate unique chat ID
   useEffect(() => {

@@ -21,11 +21,22 @@ import { useAuth } from "@/context/AuthContext";
 import { useGeneration } from "@/context/GenerationContext";
 import Link from "next/link";
 
+export function generateChatId() {
+  // Generate a unique chat ID using timestamp + random string
+  const timestamp = Date.now();
+  const randomString = Math.random().toString(36).substring(2, 15);
+  return `chat_${timestamp}_${randomString}`;
+}
+
 export default function Home() {
   const [topic, setTopic] = useState("");
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
-  const { setGenerationResponse, setIsLoadingGenerationData } = useGeneration();
+  const {
+    setGenerationResponse,
+    setIsLoadingGenerationData,
+    isLoadingGenerationData,
+  } = useGeneration();
 
   const handleGenerateVideo = async () => {
     if (!topic.trim()) {
@@ -37,13 +48,17 @@ export default function Home() {
     setIsLoadingGenerationData(true);
 
     try {
-      const api = `http://10.50.60.177:5000`;
+      const api = `http://localhost:5000`;
       const res = await fetch(`${api}/submit`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ text: topic, uid: user?.uid }),
+        body: JSON.stringify({
+          text: topic,
+          uid: user?.uid,
+          chatID: generateChatId(),
+        }),
       });
 
       const responseData = await res.json();
@@ -212,6 +227,19 @@ export default function Home() {
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
                 <p className="text-gray-400">Loading...</p>
+              </div>
+            )}
+
+            {/* Generation Loading Overlay */}
+            {isLoadingGenerationData && (
+              <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-6"></div>
+                  <h3 className="text-white text-xl font-semibold mb-2">
+                    Generating your animation...
+                  </h3>
+                  <p className="text-gray-400">This might take a few moments</p>
+                </div>
               </div>
             )}
           </div>

@@ -185,8 +185,8 @@ const SceneBuilderPage = () => {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      // Redirect to library or results page
-      router.push("/library");
+      // Redirect to video selection page
+      router.push("/video-selection");
     } catch (error) {
       console.error("Error generating animation:", error);
       alert("Failed to generate animation. Please try again.");

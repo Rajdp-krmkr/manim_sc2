@@ -48,7 +48,8 @@ export default function Home() {
     setIsLoadingGenerationData(true);
 
     try {
-      const api = `http://localhost:5000`;
+      const api =
+        process.env.NEXT_PUBLIC_BACKEND_URL || `http://localhost:5001`;
       const res = await fetch(`${api}/submit`, {
         method: "POST",
         headers: {
@@ -61,8 +62,22 @@ export default function Home() {
         }),
       });
 
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
       const responseData = await res.json();
-      console.log("API Response:", responseData?.data.scenes);
+      console.log("API Response:", responseData);
+
+      // Check if the response indicates success
+      if (!responseData.success) {
+        throw new Error(responseData.message || "Failed to generate video");
+      }
+
+      // Safe access to scenes data with fallback
+      const scenesData =
+        responseData?.data?.scenes || responseData?.scenes || [];
+      console.log("Scenes data:", scenesData);
 
       // Store the response in context along with the original topic
       setGenerationResponse({
@@ -74,8 +89,10 @@ export default function Home() {
       // Navigate to scene-builder page
       router.push("/scene-builder");
     } catch (error) {
-      console.log(error);
-      alert("Failed to submit your request. Please try again.");
+      console.error("Error generating video:", error);
+      alert(
+        `Failed to submit your request: ${error.message}. Please try again.`
+      );
     } finally {
       setIsLoadingGenerationData(false);
     }

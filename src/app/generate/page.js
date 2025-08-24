@@ -46,7 +46,7 @@ const VideoGenerationPage = () => {
   const videoContainerRef = useRef(null);
   const chatEndRef = useRef(null);
 
-  const SERVER_URL = "http://10.50.60.177:5000"; // Updated to match your Express server port
+  const SERVER_URL = "http://10.50.57.82:5000"; // Updated to match your Express server port
 
   // Check server status
   const checkServerStatus = async () => {

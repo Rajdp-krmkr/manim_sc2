@@ -666,7 +666,7 @@ const SceneBuilderPage = () => {
                   placeholder="Enter your animation topic..."
                   className="flex-1 bg-transparent text-white placeholder:text-gray-400 border-none outline-none text-base font-medium min-h-[36px]"
                 />
-                <button
+                {/* <button
                   onClick={startScriptGeneration}
                   disabled={!topic || isGenerating || !user?.uid}
                   className="bg-white text-black px-5 py-2.5 rounded-lg font-semibold text-sm hover:bg-gray-100 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg hover:shadow-xl"
@@ -682,7 +682,7 @@ const SceneBuilderPage = () => {
                       Generate Scripts
                     </>
                   )}
-                </button>
+                </button> */}
               </div>
             </div>
           </div>

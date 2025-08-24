@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 
-const VideoPlayer = ({ apiUrl = "http://localhost:5001" }) => {
+const VideoPlayer = ({ apiUrl = "http://139.84.154.247:5001" }) => {
   const [videos, setVideos] = useState([]);
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [loading, setLoading] = useState(false);

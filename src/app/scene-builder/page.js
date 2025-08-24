@@ -87,7 +87,7 @@ const SceneBuilderContent = () => {
 
   // Backend configuration
   const BACKEND_URL =
-    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5001";
+    process.env.NEXT_PUBLIC_BACKEND_URL || "http://139.84.154.247:5001";
 
   // Utility functions for scriptVersions
   const updateScene = (versionId, sceneId, updates) => {

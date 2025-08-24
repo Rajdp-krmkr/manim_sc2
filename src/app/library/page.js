@@ -26,20 +26,6 @@ const LibraryPage = () => {
   // Placeholder video data
   const placeholderVideos = [
     {
-      id: 1,
-      title: "Derivative of x²",
-      description:
-        "Animated visualization of the derivative concept using limits",
-      thumbnail:
-        "https://via.placeholder.com/300x200/1f2937/ffffff?text=d/dx(x²)",
-      duration: "2:34",
-      createdAt: "2025-08-20",
-      size: "12.5 MB",
-      format: "MP4",
-      prompt:
-        "Show the derivative of x² as the limit of the difference quotient",
-    },
-    {
       id: 2,
       title: "Matrix Multiplication",
       description: "2x2 matrix multiplication with geometric transformations",
@@ -51,55 +37,6 @@ const LibraryPage = () => {
       format: "MP4",
       prompt:
         "Demonstrate matrix multiplication with 2x2 matrices using geometric transformations",
-    },
-    {
-      id: 3,
-      title: "Unit Circle Animation",
-      description: "Sine and cosine wave formation from unit circle",
-      thumbnail:
-        "https://via.placeholder.com/300x200/1f2937/ffffff?text=sin(θ)+cos(θ)",
-      duration: "4:12",
-      createdAt: "2025-08-18",
-      size: "24.8 MB",
-      format: "MP4",
-      prompt: "Animate the unit circle showing sine and cosine wave formation",
-    },
-    {
-      id: 4,
-      title: "Fourier Transform",
-      description: "Breaking down complex waves into sine components",
-      thumbnail:
-        "https://via.placeholder.com/300x200/1f2937/ffffff?text=Fourier+Transform",
-      duration: "5:45",
-      createdAt: "2025-08-17",
-      size: "32.1 MB",
-      format: "MP4",
-      prompt:
-        "Demonstrate Fourier transform by decomposing a square wave into sine components",
-    },
-    {
-      id: 5,
-      title: "Pythagorean Theorem",
-      description: "Visual proof of the Pythagorean theorem",
-      thumbnail:
-        "https://via.placeholder.com/300x200/1f2937/ffffff?text=a²+b²=c²",
-      duration: "3:56",
-      createdAt: "2025-08-16",
-      size: "21.7 MB",
-      format: "MP4",
-      prompt:
-        "Create a visual proof of the Pythagorean theorem with animated squares",
-    },
-    {
-      id: 6,
-      title: "Complex Numbers",
-      description: "Multiplication in the complex plane",
-      thumbnail: "https://via.placeholder.com/300x200/1f2937/ffffff?text=z₁×z₂",
-      duration: "4:33",
-      createdAt: "2025-08-15",
-      size: "26.4 MB",
-      format: "MP4",
-      prompt: "Visualize complex number multiplication in the complex plane",
     },
   ];
 
@@ -278,7 +215,10 @@ const LibraryPage = () => {
                   />
                   <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <button
-                      onClick={() => handleVideoAction("play", video)}
+                      onClick={() => {
+                        handleVideoAction("play", video),
+                          router.push("/generate");
+                      }}
                       className="bg-white text-black p-3 rounded-full hover:bg-gray-200 transition-colors"
                     >
                       <FiPlay className="text-xl" />

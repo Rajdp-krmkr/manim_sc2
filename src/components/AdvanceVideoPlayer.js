@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from "react";
 
-const AdvancedVideoPlayer = ({ apiUrl = 'http://localhost:5001' }) => {
+const AdvancedVideoPlayer = ({ apiUrl = "http://localhost:5001" }) => {
   const [videos, setVideos] = useState([]);
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -16,18 +16,18 @@ const AdvancedVideoPlayer = ({ apiUrl = 'http://localhost:5001' }) => {
   const fetchVideos = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      const response = await fetch(${apiUrl}/videos);
+      const response = await fetch(`${apiUrl}/videos`);
       const data = await response.json();
-      
+
       if (data.success) {
         setVideos(data.videos);
       } else {
-        setError('Failed to load videos');
+        setError("Failed to load videos");
       }
     } catch (err) {
-      setError(Connection error: ${err.message});
+      setError(`Connection error: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -95,15 +95,15 @@ const AdvancedVideoPlayer = ({ apiUrl = 'http://localhost:5001' }) => {
   const formatTime = (time) => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
   const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   useEffect(() => {
@@ -118,22 +118,22 @@ const AdvancedVideoPlayer = ({ apiUrl = 'http://localhost:5001' }) => {
           margin: 0 auto;
           padding: 20px;
         }
-        
+
         .player-container {
           background: #000;
           border-radius: 10px;
           overflow: hidden;
           margin: 20px 0;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         }
-        
+
         .video-wrapper {
           position: relative;
           width: 100%;
           height: 0;
           padding-bottom: 56.25%; /* 16:9 aspect ratio */
         }
-        
+
         .video-element {
           position: absolute;
           top: 0;
@@ -142,9 +142,9 @@ const AdvancedVideoPlayer = ({ apiUrl = 'http://localhost:5001' }) => {
           height: 100%;
           object-fit: contain;
         }
-        
+
         .custom-controls {
-          background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+          background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
           position: absolute;
           bottom: 0;
           left: 0;
@@ -152,46 +152,46 @@ const AdvancedVideoPlayer = ({ apiUrl = 'http://localhost:5001' }) => {
           padding: 20px;
           color: white;
         }
-        
+
         .progress-container {
           margin-bottom: 15px;
         }
-        
+
         .progress-bar {
           width: 100%;
           height: 6px;
-          background: rgba(255,255,255,0.3);
+          background: rgba(255, 255, 255, 0.3);
           border-radius: 3px;
           cursor: pointer;
           position: relative;
         }
-        
+
         .progress-fill {
           height: 100%;
           background: #0070f3;
           border-radius: 3px;
           transition: width 0.1s ease;
         }
-        
+
         .controls-row {
           display: flex;
           align-items: center;
           justify-content: space-between;
           gap: 15px;
         }
-        
+
         .left-controls {
           display: flex;
           align-items: center;
           gap: 15px;
         }
-        
+
         .right-controls {
           display: flex;
           align-items: center;
           gap: 15px;
         }
-        
+
         .control-btn {
           background: none;
           border: none;
@@ -202,50 +202,50 @@ const AdvancedVideoPlayer = ({ apiUrl = 'http://localhost:5001' }) => {
           border-radius: 3px;
           transition: background 0.2s;
         }
-        
+
         .control-btn:hover {
-          background: rgba(255,255,255,0.2);
+          background: rgba(255, 255, 255, 0.2);
         }
-        
+
         .time-display {
           font-size: 14px;
           min-width: 100px;
         }
-        
+
         .volume-container {
           display: flex;
           align-items: center;
           gap: 10px;
         }
-        
+
         .volume-slider {
           width: 80px;
         }
-        
+
         .speed-select {
-          background: rgba(255,255,255,0.1);
-          border: 1px solid rgba(255,255,255,0.3);
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.3);
           color: white;
           padding: 3px 8px;
           border-radius: 3px;
           font-size: 12px;
         }
-        
+
         .video-info {
           background: white;
           padding: 15px;
           border-radius: 8px;
           margin: 10px 0;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-        
+
         .playlist {
           background: white;
           border-radius: 8px;
           padding: 20px;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-        
+
         .playlist-item {
           display: flex;
           align-items: center;
@@ -256,16 +256,16 @@ const AdvancedVideoPlayer = ({ apiUrl = 'http://localhost:5001' }) => {
           transition: all 0.2s;
           border: 2px solid transparent;
         }
-        
+
         .playlist-item:hover {
           background: #f8f9fa;
         }
-        
+
         .playlist-item.active {
           background: #e3f2fd;
           border-color: #0070f3;
         }
-        
+
         .thumbnail {
           width: 60px;
           height: 40px;
@@ -278,21 +278,21 @@ const AdvancedVideoPlayer = ({ apiUrl = 'http://localhost:5001' }) => {
           font-size: 12px;
           color: #666;
         }
-        
+
         .video-details {
           flex-grow: 1;
         }
-        
+
         .video-title {
           font-weight: bold;
           margin-bottom: 5px;
         }
-        
+
         .video-meta {
           font-size: 12px;
           color: #666;
         }
-        
+
         .no-video-placeholder {
           background: #333;
           color: white;
@@ -302,14 +302,14 @@ const AdvancedVideoPlayer = ({ apiUrl = 'http://localhost:5001' }) => {
           font-size: 18px;
           min-height: 400px;
         }
-        
+
         .header-controls {
           display: flex;
           justify-content: space-between;
           align-items: center;
           margin-bottom: 20px;
         }
-        
+
         .btn {
           background: #0070f3;
           color: white;
@@ -319,11 +319,11 @@ const AdvancedVideoPlayer = ({ apiUrl = 'http://localhost:5001' }) => {
           cursor: pointer;
           font-size: 14px;
         }
-        
+
         .btn:hover {
           background: #0051cc;
         }
-        
+
         .error {
           background: #f8d7da;
           color: #721c24;
@@ -337,7 +337,7 @@ const AdvancedVideoPlayer = ({ apiUrl = 'http://localhost:5001' }) => {
       <div className="header-controls">
         <h2>🎬 Advanced Video Player</h2>
         <button className="btn" onClick={fetchVideos} disabled={loading}>
-          {loading ? 'Loading...' : 'Refresh Videos'}
+          {loading ? "Loading..." : "Refresh Videos"}
         </button>
       </div>
 
@@ -356,33 +356,35 @@ const AdvancedVideoPlayer = ({ apiUrl = 'http://localhost:5001' }) => {
                 onLoadedMetadata={handleLoadedMetadata}
                 preload="metadata"
               >
-                <source 
-                  src={${apiUrl}/stream/${encodeURIComponent(selectedVideo.name)}}
-                  type="video/mp4" 
+                <source
+                  src={`${apiUrl}/stream/${encodeURIComponent(
+                    selectedVideo.name
+                  )}`}
+                  type="video/mp4"
                 />
               </video>
-              
+
               <div className="custom-controls">
                 <div className="progress-container">
                   <div className="progress-bar" onClick={handleSeek}>
-                    <div 
-                      className="progress-fill" 
-                      style={{ width: ${(currentTime / duration) * 100}% }}
+                    <div
+                      className="progress-fill"
+                      style={`{ width: ${(currentTime / duration) * 100}% }`}
                     />
                   </div>
                 </div>
-                
+
                 <div className="controls-row">
                   <div className="left-controls">
                     <button className="control-btn" onClick={togglePlayPause}>
-                      {isPlaying ? '⏸' : '▶'}
+                      {isPlaying ? "⏸" : "▶"}
                     </button>
-                    
+
                     <div className="time-display">
                       {formatTime(currentTime)} / {formatTime(duration)}
                     </div>
                   </div>
-                  
+
                   <div className="right-controls">
                     <div className="volume-container">
                       <span>🔊</span>
@@ -396,9 +398,9 @@ const AdvancedVideoPlayer = ({ apiUrl = 'http://localhost:5001' }) => {
                         className="volume-slider"
                       />
                     </div>
-                    
-                    <select 
-                      value={playbackRate} 
+
+                    <select
+                      value={playbackRate}
                       onChange={handlePlaybackRateChange}
                       className="speed-select"
                     >
@@ -424,33 +426,39 @@ const AdvancedVideoPlayer = ({ apiUrl = 'http://localhost:5001' }) => {
       {selectedVideo && (
         <div className="video-info">
           <h3>Now Playing: {selectedVideo.name}</h3>
-          <p>Size: {formatFileSize(selectedVideo.size)} | Modified: {new Date(selectedVideo.modified).toLocaleDateString()}</p>
+          <p>
+            Size: {formatFileSize(selectedVideo.size)} | Modified:{" "}
+            {new Date(selectedVideo.modified).toLocaleDateString()}
+          </p>
         </div>
       )}
 
       <div className="playlist">
         <h3>Playlist ({videos.length} videos)</h3>
-        
+
         {videos.map((video, index) => (
-          <div 
+          <div
             key={index}
-            className={playlist-item ${selectedVideo?.name === video.name ? 'active' : ''}}
+            className={`playlist-item ${
+              selectedVideo?.name === video.name ? "active" : ""
+            }`}
             onClick={() => selectVideo(video)}
           >
-            <div className="thumbnail">
-              🎬
-            </div>
+            <div className="thumbnail">🎬</div>
             <div className="video-details">
               <div className="video-title">{video.name}</div>
               <div className="video-meta">
-                {formatFileSize(video.size)} • {new Date(video.modified).toLocaleDateString()}
+                {formatFileSize(video.size)} •{" "}
+                {new Date(video.modified).toLocaleDateString()}
               </div>
             </div>
           </div>
         ))}
-        
+
         {videos.length === 0 && !loading && (
-          <p>No videos available. Add videos to your server's /video directory.</p>
+          <p>
+            No videos available. Add videos to your server&apos;s /video directory.
+          </p>
         )}
       </div>
     </div>
